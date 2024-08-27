@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package pass.keeper;
+
+option go_package = "pkg/grpc_api";
+
+message RegisterUserRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message RegisterUserResponse {
+}
+
+message AuthUserRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message AuthUserResponse {
+  string token = 1;
+}
+
+service PassKeeper {
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
+  rpc AuthUser(AuthUserRequest) returns (AuthUserResponse);
+}
