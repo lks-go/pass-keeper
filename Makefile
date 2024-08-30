@@ -23,6 +23,9 @@ generate:
 	go generate ./...
 	go mod tidy
 
+cert_gen:
+	cd ./cert && sh gen.sh
+
 # alternative variant to generate grpc client/server
 generate_grpc:
 	mkdir -p ./pkg/grpc && \
@@ -30,7 +33,6 @@ generate_grpc:
 	--proto_path=$(PROJECT_API_PATH) \
 	--go_out=./pkg/grpc --go_opt=paths=source_relative \
 	--go-grpc_out=./pkg/grpc --go-grpc_opt=paths=source_relative pass-keeper.proto
-
 
 run_server:
 	go run cmd/server/main.go

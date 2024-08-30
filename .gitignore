@@ -24,8 +24,11 @@ bin
 .vscode
 
 # certs
-cert.pem
-key.pem
+*.pem
+*.csr
+*.key
+*.crt
+
 config.json
 
 .DS_Store
