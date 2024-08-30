@@ -12,6 +12,7 @@ tools: install_protoc
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 	go install github.com/vektra/mockery/v2@v2.43.2
+	go install -tags "postgres" github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.1
 
 
 install_protoc:
@@ -36,3 +37,6 @@ generate_grpc:
 
 run_server:
 	go run cmd/server/main.go
+
+new_migration:
+	$(GOPATH)/bin/migrate create -ext sql -dir ./migrations -seq $(filter-out $@, $(MAKECMDGOALS))

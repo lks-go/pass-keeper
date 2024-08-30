@@ -12,17 +12,16 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	"github.com/lks-go/pass-keeper/internal/app/setup"
 	"github.com/lks-go/pass-keeper/internal/interceptor"
 	"github.com/lks-go/pass-keeper/internal/transport/grpchandler"
 	"github.com/lks-go/pass-keeper/pkg/grpc_api"
 )
 
 type ServerAPPConfig struct {
-	GRPCNetAddress string `env:"GRPC_NET_ADDRESS" env-default:":9000"`
-	//DatabaseDSN    string `env:"DATABASE_DSN" env-required:"true"`
-	//UserPassSalt   string `env:"USER_PASS_SALT" env-required:"true"`
-	DatabaseDSN       string
-	UserPassSalt      string
+	GRPCNetAddress    string `env:"GRPC_NET_ADDRESS" env-default:":9000"`
+	DatabaseDSN       string `env:"DATABASE_DSN" env-required:"true"`
+	UserPassSalt      string `env:"USER_PASS_SALT" env-required:"true"`
 	EnableTLS         bool   `env:"ENABLE_TLS" env-default:"true"`
 	CertServerCRTPath string `env:"SERVER_CRT_PATH" env-default:"cert/server.crt"`
 	CertServerKeyPath string `env:"SERVER_CRT_PATH" env-default:"cert/server.key"`
@@ -42,19 +41,23 @@ func NewServerAPP(cfg *ServerAPPConfig) *ServerAPP {
 }
 
 func (app *ServerAPP) Build() error {
-	//pool, err := setup.DB(app.config.DatabaseDSN)
-	//if err != nil {
-	//	return fmt.Errorf("failed to setup DB: %w", err)
-	//}
+	pool, err := setup.DB(app.config.DatabaseDSN)
+	if err != nil {
+		return fmt.Errorf("failed to setup DB: %w", err)
+	}
+
+	if err := RunMigrations(app.config.DatabaseDSN, "./migrations"); err != nil {
+		return fmt.Errorf("failed to run migraions: %w", err)
+	}
 
 	//storage := storage.New(pool)
-
+	//
 	//cfg := service.Config{
 	//	UserPassSalt: app.config.UserPassSalt,
 	//}
 	//UserRegistrar := service.NewUserRegistrarWithPassHash(&cfg, service.NewUserRegistrar(&cfg, storage))
 
-	//app.pool = pool
+	app.pool = pool
 	app.grpcHandler = grpchandler.New()
 
 	return nil
