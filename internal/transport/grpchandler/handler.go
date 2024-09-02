@@ -8,12 +8,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/lks-go/pass-keeper/internal/service"
+	"github.com/lks-go/pass-keeper/internal/service/server"
 	"github.com/lks-go/pass-keeper/pkg/grpc_api"
 )
 
 type Service interface {
-	RegisterUser(ctx context.Context, u service.User) (string, error)
+	RegisterUser(ctx context.Context, login, password string) (string, error)
+	AuthUser(ctx context.Context, login string, password string) (string, error)
 }
 
 func New(s Service) *Handler {
@@ -29,15 +30,10 @@ type Handler struct {
 }
 
 func (h *Handler) RegisterUser(ctx context.Context, request *grpc_api.RegisterUserRequest) (*grpc_api.RegisterUserResponse, error) {
-	u := service.User{
-		Login:    request.Login,
-		Password: request.Password,
-	}
-
-	userId, err := h.service.RegisterUser(ctx, u)
+	userId, err := h.service.RegisterUser(ctx, request.Login, request.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrAlreadyExists):
+		case errors.Is(err, server.ErrAlreadyExists):
 			return nil, status.Error(codes.AlreadyExists, (codes.AlreadyExists).String())
 		default:
 			return nil, status.Error(codes.Internal, (codes.Internal).String())
@@ -50,6 +46,17 @@ func (h *Handler) RegisterUser(ctx context.Context, request *grpc_api.RegisterUs
 }
 
 func (h *Handler) AuthUser(ctx context.Context, request *grpc_api.AuthUserRequest) (*grpc_api.AuthUserResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	jwtString, err := h.service.AuthUser(ctx, request.Login, request.Password)
+	if err != nil {
+		switch {
+		case errors.Is(err, server.ErrUsersPasswordNotMatch):
+			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+		case errors.Is(err, server.ErrNotFound):
+			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
+		default:
+			return nil, status.Error(codes.Internal, (codes.Internal).String())
+		}
+	}
+
+	return &grpc_api.AuthUserResponse{Token: jwtString}, nil
 }

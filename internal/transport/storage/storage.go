@@ -1,4 +1,4 @@
-package user
+package storage
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	"github.com/lks-go/pass-keeper/internal/service"
+	"github.com/lks-go/pass-keeper/internal/service/server"
 )
 
 func New(db *sql.DB) *Storage {
@@ -27,7 +27,7 @@ type user struct {
 	PasswordHash string
 }
 
-func (s *Storage) AddUser(ctx context.Context, login string, passwordHash string) (string, error) {
+func (s *Storage) RegisterUser(ctx context.Context, login string, passwordHash string) (string, error) {
 	q := `INSERT INTO users (login, password_hash) VALUES ($1, $2) RETURNING id`
 
 	id := ""
@@ -35,7 +35,7 @@ func (s *Storage) AddUser(ctx context.Context, login string, passwordHash string
 	if err != nil {
 		if err, ok := err.(*pgconn.PgError); ok {
 			if err.Code == pgerrcode.UniqueViolation {
-				return "", service.ErrAlreadyExists
+				return "", server.ErrAlreadyExists
 			}
 		}
 
@@ -45,19 +45,19 @@ func (s *Storage) AddUser(ctx context.Context, login string, passwordHash string
 	return id, nil
 }
 
-func (s *Storage) UserByLogin(ctx context.Context, login string) (*service.User, error) {
+func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, error) {
 	q := `SELECT id, login, password_hash FROM users WHERE login = $1;`
 
 	u := user{}
 	if err := s.db.QueryRowContext(ctx, q, login).Scan(&u.ID, &u.Login, &u.PasswordHash); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, service.ErrNotFound
+			return nil, server.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("query row error: %w", err)
 	}
 
-	su := service.User{
+	su := server.User{
 		ID:           u.ID,
 		Login:        u.Login,
 		PasswordHash: u.PasswordHash,

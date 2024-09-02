@@ -17,7 +17,7 @@ import (
 	"github.com/lks-go/pass-keeper/internal/lib/password"
 	"github.com/lks-go/pass-keeper/internal/service"
 	"github.com/lks-go/pass-keeper/internal/transport/grpchandler"
-	"github.com/lks-go/pass-keeper/internal/transport/storage/user"
+	"github.com/lks-go/pass-keeper/internal/transport/storage"
 	"github.com/lks-go/pass-keeper/pkg/grpc_api"
 )
 
@@ -53,13 +53,19 @@ func (app *ServerAPP) Build() error {
 		return fmt.Errorf("failed to run migraions: %w", err)
 	}
 
-	storage := user.New(pool)
+	storage := storage.New(pool)
 	passwordHaser := password.New(app.config.UserPassSalt)
 
-	UserRegistrar := service.NewUserRegistrar(&service.Config{}, storage, passwordHaser)
+	servDeps := service.ServerDeps{
+		Storage:      storage,
+		PasswordHash: passwordHaser,
+	}
+	service := service.NewServer(servDeps)
+
+	grpcHandler := grpchandler.New(service)
 
 	app.pool = pool
-	app.grpcHandler = grpchandler.New(UserRegistrar)
+	app.grpcHandler = grpcHandler
 
 	return nil
 }
