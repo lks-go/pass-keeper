@@ -3,11 +3,14 @@ package server
 import (
 	"context"
 	"fmt"
+
+	"github.com/lks-go/pass-keeper/internal/lib/token"
 )
 
 type Service struct {
 	Storage  Storage
 	Password PasswordHash
+	Token    *token.Token
 }
 
 // RegisterUser registers a new user with his login and password
@@ -21,7 +24,6 @@ func (s *Service) RegisterUser(ctx context.Context, login string, password strin
 }
 
 func (s *Service) AuthUser(ctx context.Context, login string, password string) (string, error) {
-
 	u, err := s.Storage.UserByLogin(ctx, login)
 	if err != nil {
 		return "", fmt.Errorf("failed to get user login: %w", err)
@@ -31,7 +33,10 @@ func (s *Service) AuthUser(ctx context.Context, login string, password string) (
 		return "", ErrUsersPasswordNotMatch
 	}
 
-	// TODO gen jwt
+	token, err := s.Token.BuildNewJWTToken(login)
+	if err != nil {
+		return "", fmt.Errorf("failed to build token: %w", err)
+	}
 
-	return "test", nil
+	return token, nil
 }
