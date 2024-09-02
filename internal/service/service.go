@@ -1,6 +1,8 @@
 package service
 
-import "context"
+import (
+	"context"
+)
 
 type Config struct {
 	UserPassSalt string
@@ -15,8 +17,10 @@ type Service struct {
 }
 
 type User struct {
-	Login    string
-	Password string
+	ID           string
+	Login        string
+	Password     string
+	PasswordHash string
 }
 
 // Auth authenticates and authorizes the user by login and password

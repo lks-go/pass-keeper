@@ -8,7 +8,6 @@ import (
 )
 
 func DB(dsn string) (*sql.DB, error) {
-	fmt.Printf("dsn: %s\n", dsn)
 	pool, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
