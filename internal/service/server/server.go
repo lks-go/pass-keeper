@@ -60,7 +60,6 @@ func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data 
 	}
 
 	// TODO encrypt data
-
 	if err := s.Storage.AddDataLoginPass(ctx, u.ID, data); err != nil {
 		return fmt.Errorf("failed to add data: %w", err)
 	}
