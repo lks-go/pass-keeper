@@ -66,13 +66,42 @@ func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, 
 	return &su, nil
 }
 
-func (s *Storage) AddData(ctx context.Context, owner string, data server.Data) error {
-	q := `INSERT INTO data (owner, title, encrypted_payload, part) VALUES ($1, $2, $3, $4)`
+func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.Data) error {
+	q := `INSERT INTO login_pass (owner, title, encrypted_login, encrypted_password) VALUES ($1, $2, $3, $4)`
 
-	_, err := s.db.ExecContext(ctx, q, owner, data.Title, data.Payload, data.Part)
+	_, err := s.db.ExecContext(ctx, q, owner, data.Title, data.Login, data.Password)
 	if err != nil {
 		return fmt.Errorf("failed to exec query: %w", err)
 	}
 
 	return nil
+}
+
+func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Data, error) {
+	q := `SELECT id, title, encrypted_login, encrypted_password FROM login_pass WHERE owner = $1`
+
+	rows, err := s.db.QueryContext(ctx, q, owner)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, server.ErrNotFound
+		}
+
+		return nil, fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	data := make([]server.Data, 0)
+	for rows.Next() {
+		d := server.Data{}
+		if err := rows.Scan(&d.ID, &d.Title, &d.Login, &d.Password); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		data = append(data, d)
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close rows: %w", err)
+	}
+
+	return data, nil
 }

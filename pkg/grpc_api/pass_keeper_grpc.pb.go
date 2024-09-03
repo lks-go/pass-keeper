@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PassKeeper_RegisterUser_FullMethodName     = "/pass.keeper.PassKeeper/RegisterUser"
-	PassKeeper_AuthUser_FullMethodName         = "/pass.keeper.PassKeeper/AuthUser"
-	PassKeeper_AddDataLoginPass_FullMethodName = "/pass.keeper.PassKeeper/AddDataLoginPass"
+	PassKeeper_RegisterUser_FullMethodName         = "/pass.keeper.PassKeeper/RegisterUser"
+	PassKeeper_AuthUser_FullMethodName             = "/pass.keeper.PassKeeper/AuthUser"
+	PassKeeper_AddDataLoginPass_FullMethodName     = "/pass.keeper.PassKeeper/AddDataLoginPass"
+	PassKeeper_GetDataLoginPassList_FullMethodName = "/pass.keeper.PassKeeper/GetDataLoginPassList"
 )
 
 // PassKeeperClient is the client API for PassKeeper service.
@@ -31,6 +32,7 @@ type PassKeeperClient interface {
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error)
 	AuthUser(ctx context.Context, in *AuthUserRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
 	AddDataLoginPass(ctx context.Context, in *AddDataLoginPassRequest, opts ...grpc.CallOption) (*AddDataLoginPassResponse, error)
+	GetDataLoginPassList(ctx context.Context, in *GetDataLoginPassListRequest, opts ...grpc.CallOption) (*GetDataLoginPassListResponse, error)
 }
 
 type passKeeperClient struct {
@@ -71,6 +73,16 @@ func (c *passKeeperClient) AddDataLoginPass(ctx context.Context, in *AddDataLogi
 	return out, nil
 }
 
+func (c *passKeeperClient) GetDataLoginPassList(ctx context.Context, in *GetDataLoginPassListRequest, opts ...grpc.CallOption) (*GetDataLoginPassListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDataLoginPassListResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_GetDataLoginPassList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PassKeeperServer is the server API for PassKeeper service.
 // All implementations must embed UnimplementedPassKeeperServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type PassKeeperServer interface {
 	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error)
 	AuthUser(context.Context, *AuthUserRequest) (*AuthUserResponse, error)
 	AddDataLoginPass(context.Context, *AddDataLoginPassRequest) (*AddDataLoginPassResponse, error)
+	GetDataLoginPassList(context.Context, *GetDataLoginPassListRequest) (*GetDataLoginPassListResponse, error)
 	mustEmbedUnimplementedPassKeeperServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedPassKeeperServer) AuthUser(context.Context, *AuthUserRequest)
 }
 func (UnimplementedPassKeeperServer) AddDataLoginPass(context.Context, *AddDataLoginPassRequest) (*AddDataLoginPassResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddDataLoginPass not implemented")
+}
+func (UnimplementedPassKeeperServer) GetDataLoginPassList(context.Context, *GetDataLoginPassListRequest) (*GetDataLoginPassListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataLoginPassList not implemented")
 }
 func (UnimplementedPassKeeperServer) mustEmbedUnimplementedPassKeeperServer() {}
 func (UnimplementedPassKeeperServer) testEmbeddedByValue()                    {}
@@ -172,6 +188,24 @@ func _PassKeeper_AddDataLoginPass_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PassKeeper_GetDataLoginPassList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataLoginPassListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).GetDataLoginPassList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_GetDataLoginPassList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).GetDataLoginPassList(ctx, req.(*GetDataLoginPassListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PassKeeper_ServiceDesc is the grpc.ServiceDesc for PassKeeper service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var PassKeeper_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddDataLoginPass",
 			Handler:    _PassKeeper_AddDataLoginPass_Handler,
+		},
+		{
+			MethodName: "GetDataLoginPassList",
+			Handler:    _PassKeeper_GetDataLoginPassList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

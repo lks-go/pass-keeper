@@ -5,7 +5,8 @@ import "context"
 type Storage interface {
 	RegisterUser(ctx context.Context, login string, passwordHash string) (string, error)
 	UserByLogin(ctx context.Context, login string) (*User, error)
-	AddData(ctx context.Context, owner string, data Data) error
+	AddLoginPass(ctx context.Context, owner string, data Data) error
+	LoginPassList(ctx context.Context, owner string) ([]Data, error)
 }
 
 type PasswordHash interface {

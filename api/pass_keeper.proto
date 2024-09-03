@@ -28,8 +28,21 @@ message AddDataLoginPassRequest {
 
 message AddDataLoginPassResponse {}
 
+message GetDataLoginPassListRequest {}
+
+message GetDataLoginPassListResponse {
+  repeated Data list = 1;
+
+  message Data {
+    string title = 1;
+    string login = 2;
+    string pass = 3;
+  }
+}
+
 service PassKeeper {
   rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
   rpc AuthUser(AuthUserRequest) returns (AuthUserResponse);
   rpc AddDataLoginPass(AddDataLoginPassRequest) returns (AddDataLoginPassResponse);
+  rpc GetDataLoginPassList(GetDataLoginPassListRequest) returns (GetDataLoginPassListResponse);
 }

@@ -44,9 +44,10 @@ func (s *Service) AuthUser(ctx context.Context, login string, password string) (
 }
 
 type Data struct {
-	Title   string
-	Part    *int32
-	Payload string
+	ID       int32
+	Title    string
+	Login    string
+	Password string
 }
 
 func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data Data) error {
@@ -60,14 +61,51 @@ func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data 
 		}
 	}
 
-	data.Payload, err = s.Crypt.Encrypt(data.Payload)
+	data.Login, err = s.Crypt.Encrypt(data.Login)
 	if err != nil {
-		return fmt.Errorf("failed to encrypt data: %w", err)
+		return fmt.Errorf("failed to encrypt login: %w", err)
 	}
 
-	if err := s.Storage.AddData(ctx, u.ID, data); err != nil {
+	data.Password, err = s.Crypt.Encrypt(data.Password)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt password: %w", err)
+	}
+
+	if err := s.Storage.AddLoginPass(ctx, u.ID, data); err != nil {
 		return fmt.Errorf("failed to add data: %w", err)
 	}
 
 	return nil
+}
+
+func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]Data, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrNotFound):
+			return nil, ErrUserNotFound
+		default:
+			return nil, fmt.Errorf("failed to get user by login")
+		}
+	}
+
+	data, err := s.Storage.LoginPassList(ctx, u.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get data list: %w", err)
+	}
+
+	for idx := range data {
+		data[idx].Login, err = s.Crypt.Decrypt(data[idx].Login)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt login: %w", err)
+		}
+
+		data[idx].Password, err = s.Crypt.Decrypt(data[idx].Password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt password: %w", err)
+		}
+
+	}
+
+	return data, nil
 }

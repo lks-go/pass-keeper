@@ -2,7 +2,6 @@ package grpchandler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -20,6 +19,7 @@ type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
 	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.Data) error
+	DataLoginPassList(ctx context.Context, ownerLogin string) ([]server.Data, error)
 }
 
 func New(s Service) *Handler {
@@ -74,23 +74,10 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	payload := struct {
-		Login    string `json:"login"`
-		Password string `json:"password"`
-	}{
+	data := server.Data{
+		Title:    request.Title,
 		Login:    request.Login,
 		Password: request.Pass,
-	}
-
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to marshal payload")
-		return nil, status.Error(codes.Internal, (codes.Internal).String())
-	}
-
-	data := server.Data{
-		Title:   request.Title,
-		Payload: string(payloadBytes),
 	}
 	err = h.service.AddDataLoginPass(ctx, ownerLogin, data)
 	if err != nil {
@@ -105,6 +92,37 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 	}
 
 	return &grpc_api.AddDataLoginPassResponse{}, nil
+}
+
+func (h *Handler) GetDataLoginPassList(ctx context.Context, _ *grpc_api.GetDataLoginPassListRequest) (*grpc_api.GetDataLoginPassListResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	data, err := h.service.DataLoginPassList(ctx, ownerLogin)
+	if err != nil {
+		switch {
+		case errors.Is(err, server.ErrNotFound):
+			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
+		default:
+			log.Error().Err(err).Msg("failed to get login and pass list")
+			return nil, status.Error(codes.Internal, (codes.Internal).String())
+		}
+	}
+
+	list := make([]*grpc_api.GetDataLoginPassListResponse_Data, 0, len(data))
+	for _, d := range data {
+		grpcData := grpc_api.GetDataLoginPassListResponse_Data{
+			Title: d.Title,
+			Login: d.Login,
+			Pass:  d.Password,
+		}
+
+		list = append(list, &grpcData)
+	}
+
+	return &grpc_api.GetDataLoginPassListResponse{List: list}, nil
 }
 
 func userLogin(ctx context.Context) (string, error) {
