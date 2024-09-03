@@ -40,6 +40,7 @@ func (h *Handler) RegisterUser(ctx context.Context, request *grpc_api.RegisterUs
 		case errors.Is(err, server.ErrAlreadyExists):
 			return nil, status.Error(codes.AlreadyExists, (codes.AlreadyExists).String())
 		default:
+			log.Error().Err(err)
 			return nil, status.Error(codes.Internal, (codes.Internal).String())
 		}
 	}
@@ -58,6 +59,7 @@ func (h *Handler) AuthUser(ctx context.Context, request *grpc_api.AuthUserReques
 		case errors.Is(err, server.ErrNotFound):
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
+			log.Error().Err(err)
 			return nil, status.Error(codes.Internal, (codes.Internal).String())
 		}
 	}
@@ -82,6 +84,9 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		case errors.Is(err, server.ErrUserNotFound):
 			log.Warn().Str("login", request.Login).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+		default:
+			log.Error().Err(err).Msg("failed to add data login and pass")
+			return nil, status.Error(codes.Internal, (codes.Internal).String())
 		}
 	}
 
