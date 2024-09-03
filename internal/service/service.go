@@ -9,6 +9,7 @@ type ServerDeps struct {
 	Storage      server.Storage
 	PasswordHash server.PasswordHash
 	Token        *token.Token
+	Crypt        server.Crypt
 }
 
 func NewServer(d ServerDeps) *server.Service {
@@ -16,5 +17,6 @@ func NewServer(d ServerDeps) *server.Service {
 		Storage:  d.Storage,
 		Password: d.PasswordHash,
 		Token:    d.Token,
+		Crypt:    d.Crypt,
 	}
 }

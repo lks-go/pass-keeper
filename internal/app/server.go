@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/lks-go/pass-keeper/internal/app/setup"
+	"github.com/lks-go/pass-keeper/internal/lib/crypt"
 	"github.com/lks-go/pass-keeper/internal/lib/password"
 	"github.com/lks-go/pass-keeper/internal/lib/token"
 	"github.com/lks-go/pass-keeper/internal/service"
@@ -32,6 +33,7 @@ type ServerAPPConfig struct {
 	CertServerKeyPath   string        `env:"SERVER_CRT_PATH" env-default:"cert/server.key"`
 	TokenSecretKey      string        `env:"TOKEN_SECRET_KEY" env-required:"true"`
 	TokenExpirationTime time.Duration `env:"TOKEN_EXPIRATION_TIME" env-default:"10m"`
+	CryptSecretKey      string        `env:"CRYPT_SECRET_KEY" env-required:"true"`
 }
 
 type ServerAPP struct {
@@ -65,10 +67,16 @@ func (app *ServerAPP) Build() error {
 		return fmt.Errorf("failed to get token: %w", err)
 	}
 
+	crypt, err := crypt.New(app.config.CryptSecretKey)
+	if err != nil {
+		return fmt.Errorf("failed to get crypt: %w", err)
+	}
+
 	servDeps := service.ServerDeps{
 		Storage:      storage,
 		PasswordHash: passwordHasher,
 		Token:        token,
+		Crypt:        crypt,
 	}
 	service := service.NewServer(servDeps)
 

@@ -11,3 +11,8 @@ type Storage interface {
 type PasswordHash interface {
 	Hash(pass string) string
 }
+
+type Crypt interface {
+	Encrypt(stringToEncrypt string) (string, error)
+	Decrypt(encryptedString string) (string, error)
+}

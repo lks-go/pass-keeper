@@ -12,6 +12,7 @@ type Service struct {
 	Storage  Storage
 	Password PasswordHash
 	Token    *token.Token
+	Crypt    Crypt
 }
 
 // RegisterUser registers a new user with his login and password
@@ -59,7 +60,11 @@ func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data 
 		}
 	}
 
-	// TODO encrypt data
+	data.Payload, err = s.Crypt.Encrypt(data.Payload)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt data: %w", err)
+	}
+
 	if err := s.Storage.AddData(ctx, u.ID, data); err != nil {
 		return fmt.Errorf("failed to add data: %w", err)
 	}
