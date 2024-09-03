@@ -15,6 +15,7 @@ import (
 type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
+	AddDataLoginPass(ctx context.Context, userLogin string, data server.DataLoginPass) error
 }
 
 func New(s Service) *Handler {
@@ -59,4 +60,22 @@ func (h *Handler) AuthUser(ctx context.Context, request *grpc_api.AuthUserReques
 	}
 
 	return &grpc_api.AuthUserResponse{Token: jwtString}, nil
+}
+
+func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDataLoginPassRequest) (*grpc_api.AddDataLoginPassResponse, error) {
+	data := server.DataLoginPass{
+		Title:    request.Title,
+		Login:    request.Login,
+		Password: request.Pass,
+	}
+	err := h.service.AddDataLoginPass(ctx, request.Login, data)
+	if err != nil {
+		switch {
+		case errors.Is(err, server.ErrUserNotFound):
+			log.Warn().Str("login", request.Login).Msg("user not found")
+			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+		}
+	}
+
+	return &grpc_api.AddDataLoginPassResponse{}, nil
 }

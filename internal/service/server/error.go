@@ -8,6 +8,7 @@ var (
 	ErrTokenExpired          = errors.New("token expired")
 	ErrUsersPasswordNotMatch = errors.New("users password not match")
 	ErrNotFound              = errors.New("not found")
+	ErrUserNotFound          = errors.New("user not found")
 	ErrOrderConflict         = errors.New("order already registered another user")
 	ErrNotEnoughBonuses      = errors.New("not enough bonuses on balance")
 

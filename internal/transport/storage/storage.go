@@ -65,3 +65,14 @@ func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, 
 
 	return &su, nil
 }
+
+func (s *Storage) AddDataLoginPass(ctx context.Context, owner string, data server.DataLoginPass) error {
+	q := `INSERT INTO data_user_pass (owner, login, password, title) VALUES ($1, $2, $3, $4)`
+
+	_, err := s.db.ExecContext(ctx, q, owner, data.Login, data.Password, data.Title)
+	if err != nil {
+		return fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	return nil
+}

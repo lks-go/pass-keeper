@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lks-go/pass-keeper/internal/lib/token"
@@ -39,4 +40,31 @@ func (s *Service) AuthUser(ctx context.Context, login string, password string) (
 	}
 
 	return token, nil
+}
+
+type DataLoginPass struct {
+	Title    string
+	Login    string
+	Password string
+}
+
+func (s *Service) AddDataLoginPass(ctx context.Context, userLogin string, data DataLoginPass) error {
+
+	u, err := s.Storage.UserByLogin(ctx, userLogin)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrNotFound):
+			return ErrUserNotFound
+		default:
+			return fmt.Errorf("failed to get user by login")
+		}
+	}
+
+	// TODO encrypt data
+
+	if err := s.Storage.AddDataLoginPass(ctx, u.ID, data); err != nil {
+		return fmt.Errorf("failed to add data: %w", err)
+	}
+
+	return nil
 }

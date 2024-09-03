@@ -9,8 +9,7 @@ message RegisterUserRequest {
   string password = 2;
 }
 
-message RegisterUserResponse {
-}
+message RegisterUserResponse {}
 
 message AuthUserRequest {
   string login = 1;
@@ -21,7 +20,16 @@ message AuthUserResponse {
   string token = 1;
 }
 
+message AddDataLoginPassRequest {
+  string title = 1;
+  string login = 2;
+  string pass = 3;
+}
+
+message AddDataLoginPassResponse {}
+
 service PassKeeper {
   rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
   rpc AuthUser(AuthUserRequest) returns (AuthUserResponse);
+  rpc AddDataLoginPass(AddDataLoginPassRequest) returns (AddDataLoginPassResponse);
 }
