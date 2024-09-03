@@ -48,9 +48,8 @@ type DataLoginPass struct {
 	Password string
 }
 
-func (s *Service) AddDataLoginPass(ctx context.Context, userLogin string, data DataLoginPass) error {
-
-	u, err := s.Storage.UserByLogin(ctx, userLogin)
+func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data DataLoginPass) error {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrNotFound):

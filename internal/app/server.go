@@ -14,11 +14,11 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/lks-go/pass-keeper/internal/app/setup"
-	"github.com/lks-go/pass-keeper/internal/interceptor"
 	"github.com/lks-go/pass-keeper/internal/lib/password"
 	"github.com/lks-go/pass-keeper/internal/lib/token"
 	"github.com/lks-go/pass-keeper/internal/service"
 	"github.com/lks-go/pass-keeper/internal/transport/grpchandler"
+	"github.com/lks-go/pass-keeper/internal/transport/interceptor"
 	"github.com/lks-go/pass-keeper/internal/transport/storage"
 	"github.com/lks-go/pass-keeper/pkg/grpc_api"
 )
@@ -35,10 +35,10 @@ type ServerAPPConfig struct {
 }
 
 type ServerAPP struct {
-	grpcHandler grpc_api.PassKeeperServer
-	pool        *sql.DB
-
-	config *ServerAPPConfig
+	grpcHandler     grpc_api.PassKeeperServer
+	pool            *sql.DB
+	authInterceptor *interceptor.Auth
+	config          *ServerAPPConfig
 }
 
 func NewServerAPP(cfg *ServerAPPConfig) *ServerAPP {
@@ -76,6 +76,7 @@ func (app *ServerAPP) Build() error {
 
 	app.pool = pool
 	app.grpcHandler = grpcHandler
+	app.authInterceptor = interceptor.NewAuth(token)
 
 	return nil
 }
@@ -116,7 +117,7 @@ func (app *ServerAPP) startGRPCServer(ctx context.Context) error {
 	}
 
 	serverOpts := []grpc.ServerOption{
-		grpc.UnaryInterceptor(interceptor.Auth),
+		grpc.UnaryInterceptor(app.authInterceptor.CheckAccess),
 	}
 
 	if app.config.EnableTLS {

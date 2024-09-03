@@ -3,11 +3,14 @@ package grpchandler
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	"github.com/lks-go/pass-keeper/internal/service/entity"
 	"github.com/lks-go/pass-keeper/internal/service/server"
 	"github.com/lks-go/pass-keeper/pkg/grpc_api"
 )
@@ -15,7 +18,7 @@ import (
 type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
-	AddDataLoginPass(ctx context.Context, userLogin string, data server.DataLoginPass) error
+	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.DataLoginPass) error
 }
 
 func New(s Service) *Handler {
@@ -63,12 +66,17 @@ func (h *Handler) AuthUser(ctx context.Context, request *grpc_api.AuthUserReques
 }
 
 func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDataLoginPassRequest) (*grpc_api.AddDataLoginPassResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
 	data := server.DataLoginPass{
 		Title:    request.Title,
 		Login:    request.Login,
 		Password: request.Pass,
 	}
-	err := h.service.AddDataLoginPass(ctx, request.Login, data)
+	err = h.service.AddDataLoginPass(ctx, ownerLogin, data)
 	if err != nil {
 		switch {
 		case errors.Is(err, server.ErrUserNotFound):
@@ -78,4 +86,29 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 	}
 
 	return &grpc_api.AddDataLoginPassResponse{}, nil
+}
+
+func userLogin(ctx context.Context) (string, error) {
+	data, err := outgoingMetaData(ctx, entity.UserLoginHeaderName)
+	if err != nil {
+		return "", fmt.Errorf("failed to get metadata: %w", err)
+	}
+
+	log.Debug().Str("data", data[0]).Msg("outgoing data")
+
+	return data[0], nil
+}
+
+func outgoingMetaData(ctx context.Context, key string) ([]string, error) {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing metadata")
+	}
+
+	value := md.Get(key)
+	if len(value) == 0 {
+		return nil, fmt.Errorf("%s not supplied", key)
+	}
+
+	return value, nil
 }
