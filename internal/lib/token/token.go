@@ -34,7 +34,7 @@ func New(sk string, exp time.Duration) (*Token, error) {
 		exp = defaultTokenExp
 	}
 
-	return &Token{secretKey: sk}, nil
+	return &Token{secretKey: sk, exp: exp}, nil
 }
 
 type Token struct {
@@ -46,7 +46,7 @@ type Token struct {
 func (t *Token) BuildNewJWTToken(login string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(defaultTokenExp)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(t.exp)),
 		},
 		Login: login,
 	})
