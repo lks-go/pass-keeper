@@ -8,7 +8,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/golang-jwt/jwt/v4"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -50,8 +49,8 @@ func (a *Auth) CheckAccess(ctx context.Context, req any, info *grpc.UnaryServerI
 		switch {
 		case errors.Is(err, token.ErrInvalidToken):
 			return nil, status.Error(codes.InvalidArgument, token.ErrInvalidToken.Error())
-		case errors.Is(err, jwt.ErrTokenExpired):
-			return nil, status.Error(codes.InvalidArgument, jwt.ErrTokenExpired.Error())
+		case errors.Is(err, token.ErrTokenExpired):
+			return nil, status.Error(codes.InvalidArgument, token.ErrTokenExpired.Error())
 		default:
 			log.Error().Err(err).Msg("failed to parse jwt")
 			return nil, status.Error(codes.Internal, (codes.Internal).String())
