@@ -2,6 +2,7 @@ package grpchandler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -18,7 +19,7 @@ import (
 type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
-	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.DataLoginPass) error
+	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.Data) error
 }
 
 func New(s Service) *Handler {
@@ -73,10 +74,23 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	data := server.DataLoginPass{
-		Title:    request.Title,
+	payload := struct {
+		Login    string `json:"login"`
+		Password string `json:"password"`
+	}{
 		Login:    request.Login,
 		Password: request.Pass,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to marshal payload")
+		return nil, status.Error(codes.Internal, (codes.Internal).String())
+	}
+
+	data := server.Data{
+		Title:   request.Title,
+		Payload: string(payloadBytes),
 	}
 	err = h.service.AddDataLoginPass(ctx, ownerLogin, data)
 	if err != nil {

@@ -42,13 +42,13 @@ func (s *Service) AuthUser(ctx context.Context, login string, password string) (
 	return token, nil
 }
 
-type DataLoginPass struct {
-	Title    string
-	Login    string
-	Password string
+type Data struct {
+	Title   string
+	Part    *int32
+	Payload string
 }
 
-func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data DataLoginPass) error {
+func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data Data) error {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		switch {
@@ -60,7 +60,7 @@ func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data 
 	}
 
 	// TODO encrypt data
-	if err := s.Storage.AddDataLoginPass(ctx, u.ID, data); err != nil {
+	if err := s.Storage.AddData(ctx, u.ID, data); err != nil {
 		return fmt.Errorf("failed to add data: %w", err)
 	}
 

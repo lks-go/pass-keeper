@@ -46,9 +46,16 @@ func (a *Auth) CheckAccess(ctx context.Context, req any, info *grpc.UnaryServerI
 	}
 
 	claims, err = a.token.ParseJWTToken(authToken[0])
-	if err != nil && !errors.Is(err, token.ErrInvalidToken) && !errors.Is(err, jwt.ErrTokenExpired) {
-		log.Error().Err(err).Msg("failed to parse jwt")
-		return nil, status.Error(codes.InvalidArgument, "failed to parse jwt")
+	if err != nil {
+		switch {
+		case errors.Is(err, token.ErrInvalidToken):
+			return nil, status.Error(codes.InvalidArgument, token.ErrInvalidToken.Error())
+		case errors.Is(err, jwt.ErrTokenExpired):
+			return nil, status.Error(codes.InvalidArgument, jwt.ErrTokenExpired.Error())
+		default:
+			log.Error().Err(err).Msg("failed to parse jwt")
+			return nil, status.Error(codes.Internal, (codes.Internal).String())
+		}
 	}
 
 	if claims != nil && claims.Login == "" {
