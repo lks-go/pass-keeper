@@ -48,8 +48,8 @@ message AddDataCardRequest {
   string title = 1;
   string number = 2;
   string owner = 3;
-  string valid = 4;
-  int32 cvc = 5;
+  string exp_date = 4;
+  string cvc_code = 5;
 }
 
 message GetDataCardResponse {

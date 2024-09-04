@@ -19,13 +19,15 @@ type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
 
-	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.DataLoginPass) (int32, error)
+	AddDataLoginPass(ctx context.Context, ownerLogin string, data *server.DataLoginPass) (int32, error)
 	DataLoginPassList(ctx context.Context, ownerLogin string) ([]server.DataLoginPass, error)
 	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*server.DataLoginPass, error)
 
-	AddDataText(ctx context.Context, ownerLogin string, data server.DataText) (int32, error)
+	AddDataText(ctx context.Context, ownerLogin string, data *server.DataText) (int32, error)
 	DataTextList(ctx context.Context, ownerLogin string) ([]server.DataText, error)
 	DataText(ctx context.Context, ownerLogin string, ID int32) (*server.DataText, error)
+
+	AddDataCard(ctx context.Context, ownerLogin string, data *server.DataCard) (int32, error)
 }
 
 func New(s Service) *Handler {
@@ -86,7 +88,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		Login:    request.Login,
 		Password: request.Pass,
 	}
-	id, err := h.service.AddDataLoginPass(ctx, ownerLogin, data)
+	id, err := h.service.AddDataLoginPass(ctx, ownerLogin, &data)
 	if err != nil {
 		switch {
 		case errors.Is(err, server.ErrUserNotFound):
@@ -174,7 +176,7 @@ func (h *Handler) AddDataText(ctx context.Context, request *grpc_api.AddDataText
 		Title: request.Title,
 		Text:  request.Text,
 	}
-	id, err := h.service.AddDataText(ctx, ownerLogin, data)
+	id, err := h.service.AddDataText(ctx, ownerLogin, &data)
 	if err != nil {
 		switch {
 		case errors.Is(err, server.ErrUserNotFound):
@@ -253,6 +255,34 @@ func (h *Handler) GetDataText(ctx context.Context, request *grpc_api.GetDataRequ
 	}
 
 	return &response, nil
+}
+
+func (h *Handler) AddDataCard(ctx context.Context, request *grpc_api.AddDataCardRequest) (*grpc_api.AddDataResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	data := server.DataCard{
+		Title:   request.Title,
+		Number:  request.Number,
+		Owner:   request.Owner,
+		ExpDate: request.ExpDate,
+		CVCCode: request.CvcCode,
+	}
+	id, err := h.service.AddDataCard(ctx, ownerLogin, &data)
+	if err != nil {
+		switch {
+		case errors.Is(err, server.ErrUserNotFound):
+			log.Warn().Str("login", ownerLogin).Msg("user not found")
+			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+		default:
+			log.Error().Err(err).Msg("failed to add card data")
+			return nil, status.Error(codes.Internal, (codes.Internal).String())
+		}
+	}
+
+	return &grpc_api.AddDataResponse{Id: id}, nil
 }
 
 func userLogin(ctx context.Context) (string, error) {

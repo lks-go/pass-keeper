@@ -49,7 +49,7 @@ type DataLoginPass struct {
 	Password string
 }
 
-func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data DataLoginPass) (int32, error) {
+func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data *DataLoginPass) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get user by login: %w", err)
@@ -117,7 +117,7 @@ type DataText struct {
 	Text  string
 }
 
-func (s *Service) AddDataText(ctx context.Context, ownerLogin string, data DataText) (int32, error) {
+func (s *Service) AddDataText(ctx context.Context, ownerLogin string, data *DataText) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get user by login: %w", err)
@@ -167,4 +167,57 @@ func (s *Service) DataText(ctx context.Context, ownerLogin string, ID int32) (*D
 	}
 
 	return data, nil
+}
+
+type DataCard struct {
+	ID      int32
+	Title   string
+	Number  string
+	Owner   string
+	ExpDate string
+	CVCCode string
+}
+
+func (s *Service) AddDataCard(ctx context.Context, ownerLogin string, data *DataCard) (int32, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	if err := s.encryptCardData(data); err != nil {
+		return 0, fmt.Errorf("failed to encrypt card data: %w", err)
+	}
+
+	id, err := s.Storage.AddCard(ctx, u.ID, data)
+	if err != nil {
+		return 0, fmt.Errorf("failed to add card data: %w", err)
+	}
+
+	return id, nil
+}
+
+func (s *Service) encryptCardData(data *DataCard) error {
+	var err error
+
+	data.Number, err = s.Crypt.Encrypt(data.Number)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt card number: %w", err)
+	}
+
+	data.Owner, err = s.Crypt.Encrypt(data.Owner)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt card owner: %w", err)
+	}
+
+	data.ExpDate, err = s.Crypt.Encrypt(data.ExpDate)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt expiration date: %w", err)
+	}
+
+	data.CVCCode, err = s.Crypt.Encrypt(data.CVCCode)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt cvc code: %w", err)
+	}
+
+	return nil
 }
