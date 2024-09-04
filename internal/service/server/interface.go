@@ -11,6 +11,7 @@ type Storage interface {
 	LoginPassByID(ctx context.Context, owner string, ID int32) (*LoginPassData, error)
 
 	AddText(ctx context.Context, owner string, data DataText) (int32, error)
+	TextList(ctx context.Context, owner string) ([]DataText, error)
 }
 
 type UserLogin interface {

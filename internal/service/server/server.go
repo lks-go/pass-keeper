@@ -135,3 +135,17 @@ func (s *Service) AddDataText(ctx context.Context, ownerLogin string, data DataT
 
 	return id, nil
 }
+
+func (s *Service) DataTextList(ctx context.Context, ownerLogin string) ([]DataText, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	data, err := s.Storage.TextList(ctx, u.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get text list: %w", err)
+	}
+
+	return data, nil
+}

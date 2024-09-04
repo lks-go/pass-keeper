@@ -134,3 +134,32 @@ func (s *Storage) AddText(ctx context.Context, owner string, data server.DataTex
 
 	return id, nil
 }
+
+func (s *Storage) TextList(ctx context.Context, owner string) ([]server.DataText, error) {
+	q := `SELECT id, title FROM text WHERE owner = $1`
+
+	rows, err := s.db.QueryContext(ctx, q, owner)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, server.ErrNoData
+		}
+
+		return nil, fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	data := make([]server.DataText, 0)
+	for rows.Next() {
+		d := server.DataText{}
+		if err := rows.Scan(&d.ID, &d.Title); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		data = append(data, d)
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close rows: %w", err)
+	}
+
+	return data, nil
+}

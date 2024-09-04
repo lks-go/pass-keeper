@@ -24,6 +24,7 @@ type Service interface {
 	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*server.LoginPassData, error)
 
 	AddDataText(ctx context.Context, ownerLogin string, data server.DataText) (int32, error)
+	DataTextList(ctx context.Context, ownerLogin string) ([]server.DataText, error)
 }
 
 func New(s Service) *Handler {
@@ -185,6 +186,41 @@ func (h *Handler) AddDataText(ctx context.Context, request *grpc_api.AddDataText
 	}
 
 	return &grpc_api.AddDataResponse{Id: id}, nil
+}
+
+func (h *Handler) GetDataTextList(ctx context.Context, _ *grpc_api.GetDataListRequest) (*grpc_api.GetDataListResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	data, err := h.service.DataTextList(ctx, ownerLogin)
+	if err != nil {
+		if err != nil {
+			switch {
+			case errors.Is(err, server.ErrUserNotFound):
+				log.Warn().Str("login", ownerLogin).Msg("user not found")
+				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+			case errors.Is(err, server.ErrNoData):
+				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
+			default:
+				log.Error().Err(err).Msg("failed to get text list")
+				return nil, status.Error(codes.Internal, (codes.Internal).String())
+			}
+		}
+	}
+
+	list := make([]*grpc_api.GetDataListResponse_Data, 0, len(data))
+	for _, d := range data {
+		respData := grpc_api.GetDataListResponse_Data{
+			Id:    d.ID,
+			Title: d.Title,
+		}
+
+		list = append(list, &respData)
+	}
+
+	return &grpc_api.GetDataListResponse{List: list}, nil
 }
 
 func userLogin(ctx context.Context) (string, error) {
