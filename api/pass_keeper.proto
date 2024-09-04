@@ -39,7 +39,7 @@ message AddDataTextRequest {
 }
 
 message GetDataTextResponse {
-  string id = 1;
+  int32 id = 1;
   string title = 2;
   string text = 3;
 }

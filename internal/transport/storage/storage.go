@@ -66,7 +66,7 @@ func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, 
 	return &su, nil
 }
 
-func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.LoginPassData) (int32, error) {
+func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.DataLoginPass) (int32, error) {
 	q := `INSERT INTO login_pass (owner, title, encrypted_login, encrypted_password) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	var id int32
@@ -78,7 +78,7 @@ func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.Lo
 	return id, nil
 }
 
-func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.LoginPassData, error) {
+func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.DataLoginPass, error) {
 	q := `SELECT id, title FROM login_pass WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
@@ -90,9 +90,9 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Log
 		return nil, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	data := make([]server.LoginPassData, 0)
+	data := make([]server.DataLoginPass, 0)
 	for rows.Next() {
-		d := server.LoginPassData{}
+		d := server.DataLoginPass{}
 		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -107,10 +107,10 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Log
 	return data, nil
 }
 
-func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*server.LoginPassData, error) {
+func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*server.DataLoginPass, error) {
 	q := `SELECT id, title, encrypted_login, encrypted_password FROM login_pass WHERE id = $1 AND owner = $2`
 
-	data := server.LoginPassData{}
+	data := server.DataLoginPass{}
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Login, &data.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -162,4 +162,20 @@ func (s *Storage) TextList(ctx context.Context, owner string) ([]server.DataText
 	}
 
 	return data, nil
+}
+
+func (s *Storage) TextByID(ctx context.Context, owner string, ID int32) (*server.DataText, error) {
+	q := `SELECT id, title, encrypted_text FROM text WHERE id = $1 AND owner = $2`
+
+	data := server.DataText{}
+	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Text)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, server.ErrNoData
+		}
+
+		return nil, fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	return &data, nil
 }

@@ -42,14 +42,14 @@ func (s *Service) AuthUser(ctx context.Context, login string, password string) (
 	return token, nil
 }
 
-type LoginPassData struct {
+type DataLoginPass struct {
 	ID       int32
 	Title    string
 	Login    string
 	Password string
 }
 
-func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data LoginPassData) (int32, error) {
+func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data DataLoginPass) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get user by login: %w", err)
@@ -73,7 +73,7 @@ func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data 
 	return id, nil
 }
 
-func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]LoginPassData, error) {
+func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]DataLoginPass, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by login: %w", err)
@@ -87,7 +87,7 @@ func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]L
 	return data, nil
 }
 
-func (s *Service) DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*LoginPassData, error) {
+func (s *Service) DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*DataLoginPass, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by login: %w", err)
@@ -145,6 +145,25 @@ func (s *Service) DataTextList(ctx context.Context, ownerLogin string) ([]DataTe
 	data, err := s.Storage.TextList(ctx, u.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get text list: %w", err)
+	}
+
+	return data, nil
+}
+
+func (s *Service) DataText(ctx context.Context, ownerLogin string, ID int32) (*DataText, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	data, err := s.Storage.TextByID(ctx, u.ID, ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get text: %w", err)
+	}
+
+	data.Text, err = s.Crypt.Decrypt(data.Text)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt text: %w", err)
 	}
 
 	return data, nil

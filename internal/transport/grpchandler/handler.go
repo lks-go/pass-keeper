@@ -19,12 +19,13 @@ type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
 
-	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.LoginPassData) (int32, error)
-	DataLoginPassList(ctx context.Context, ownerLogin string) ([]server.LoginPassData, error)
-	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*server.LoginPassData, error)
+	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.DataLoginPass) (int32, error)
+	DataLoginPassList(ctx context.Context, ownerLogin string) ([]server.DataLoginPass, error)
+	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*server.DataLoginPass, error)
 
 	AddDataText(ctx context.Context, ownerLogin string, data server.DataText) (int32, error)
 	DataTextList(ctx context.Context, ownerLogin string) ([]server.DataText, error)
+	DataText(ctx context.Context, ownerLogin string, ID int32) (*server.DataText, error)
 }
 
 func New(s Service) *Handler {
@@ -80,7 +81,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	data := server.LoginPassData{
+	data := server.DataLoginPass{
 		Title:    request.Title,
 		Login:    request.Login,
 		Password: request.Pass,
@@ -223,13 +224,42 @@ func (h *Handler) GetDataTextList(ctx context.Context, _ *grpc_api.GetDataListRe
 	return &grpc_api.GetDataListResponse{List: list}, nil
 }
 
+func (h *Handler) GetDataText(ctx context.Context, request *grpc_api.GetDataRequest) (*grpc_api.GetDataTextResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	data, err := h.service.DataText(ctx, ownerLogin, request.Id)
+	if err != nil {
+		if err != nil {
+			switch {
+			case errors.Is(err, server.ErrUserNotFound):
+				log.Warn().Str("login", ownerLogin).Msg("user not found")
+				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+			case errors.Is(err, server.ErrNoData):
+				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
+			default:
+				log.Error().Err(err).Msg("failed to get text")
+				return nil, status.Error(codes.Internal, (codes.Internal).String())
+			}
+		}
+	}
+
+	response := grpc_api.GetDataTextResponse{
+		Id:    data.ID,
+		Title: data.Title,
+		Text:  data.Text,
+	}
+
+	return &response, nil
+}
+
 func userLogin(ctx context.Context) (string, error) {
 	data, err := outgoingMetaData(ctx, entity.UserLoginHeaderName)
 	if err != nil {
 		return "", fmt.Errorf("failed to get metadata: %w", err)
 	}
-
-	log.Debug().Str("data", data[0]).Msg("outgoing data")
 
 	return data[0], nil
 }
