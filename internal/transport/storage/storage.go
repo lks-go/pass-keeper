@@ -221,3 +221,19 @@ func (s *Storage) CardList(ctx context.Context, owner string) ([]server.DataCard
 
 	return data, nil
 }
+
+func (s *Storage) CardByID(ctx context.Context, owner string, ID int32) (*server.DataCard, error) {
+	q := `SELECT id, title, encrypted_number, encrypted_owner, encrypted_exp_date, encrypted_cvc_code FROM card WHERE id = $1 AND owner = $2`
+
+	data := server.DataCard{}
+	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Number, &data.Owner, &data.ExpDate, &data.CVCCode)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, server.ErrNoData
+		}
+
+		return nil, fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	return &data, nil
+}

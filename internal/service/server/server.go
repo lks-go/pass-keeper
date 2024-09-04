@@ -196,6 +196,38 @@ func (s *Service) AddDataCard(ctx context.Context, ownerLogin string, data *Data
 	return id, nil
 }
 
+func (s *Service) DataCardList(ctx context.Context, ownerLogin string) ([]DataCard, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	data, err := s.Storage.CardList(ctx, u.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get card list: %w", err)
+	}
+
+	return data, nil
+}
+
+func (s *Service) DataCard(ctx context.Context, ownerLogin string, ID int32) (*DataCard, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	data, err := s.Storage.CardByID(ctx, u.ID, ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get card: %w", err)
+	}
+
+	if err := s.decryptCardData(data); err != nil {
+		return nil, fmt.Errorf("failed to decrypt card data: %w", err)
+	}
+
+	return data, nil
+}
+
 func (s *Service) encryptCardData(data *DataCard) error {
 	var err error
 
@@ -222,16 +254,28 @@ func (s *Service) encryptCardData(data *DataCard) error {
 	return nil
 }
 
-func (s *Service) DataCardList(ctx context.Context, ownerLogin string) ([]DataCard, error) {
-	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+func (s *Service) decryptCardData(data *DataCard) error {
+	var err error
+
+	data.Number, err = s.Crypt.Decrypt(data.Number)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user by login: %w", err)
+		return fmt.Errorf("failed to decrypt card number: %w", err)
 	}
 
-	data, err := s.Storage.CardList(ctx, u.ID)
+	data.Owner, err = s.Crypt.Decrypt(data.Owner)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get card list: %w", err)
+		return fmt.Errorf("failed to decrypt card owner: %w", err)
 	}
 
-	return data, nil
+	data.ExpDate, err = s.Crypt.Decrypt(data.ExpDate)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt expiration date: %w", err)
+	}
+
+	data.CVCCode, err = s.Crypt.Decrypt(data.CVCCode)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt cvc code: %w", err)
+	}
+
+	return nil
 }

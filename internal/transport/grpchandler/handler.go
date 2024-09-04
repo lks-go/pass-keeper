@@ -29,6 +29,7 @@ type Service interface {
 
 	AddDataCard(ctx context.Context, ownerLogin string, data *server.DataCard) (int32, error)
 	DataCardList(ctx context.Context, ownerLogin string) ([]server.DataCard, error)
+	DataCard(ctx context.Context, ownerLogin string, ID int32) (*server.DataCard, error)
 }
 
 func New(s Service) *Handler {
@@ -317,6 +318,40 @@ func (h *Handler) GetDataCardList(ctx context.Context, _ *grpc_api.GetDataListRe
 	}
 
 	return &grpc_api.GetDataListResponse{List: list}, nil
+}
+
+func (h *Handler) GetDataCard(ctx context.Context, request *grpc_api.GetDataRequest) (*grpc_api.GetDataCardResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	data, err := h.service.DataCard(ctx, ownerLogin, request.Id)
+	if err != nil {
+		if err != nil {
+			switch {
+			case errors.Is(err, server.ErrUserNotFound):
+				log.Warn().Str("login", ownerLogin).Msg("user not found")
+				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+			case errors.Is(err, server.ErrNoData):
+				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
+			default:
+				log.Error().Err(err).Msg("failed to get card")
+				return nil, status.Error(codes.Internal, (codes.Internal).String())
+			}
+		}
+	}
+
+	response := grpc_api.GetDataCardResponse{
+		Id:      data.ID,
+		Title:   data.Title,
+		Number:  data.Number,
+		Owner:   data.Owner,
+		ExpDate: data.ExpDate,
+		CvcCode: data.CVCCode,
+	}
+
+	return &response, nil
 }
 
 func userLogin(ctx context.Context) (string, error) {

@@ -16,6 +16,7 @@ type Storage interface {
 
 	AddCard(ctx context.Context, owner string, data *DataCard) (int32, error)
 	CardList(ctx context.Context, owner string) ([]DataCard, error)
+	CardByID(ctx context.Context, owner string, ID int32) (*DataCard, error)
 }
 
 type UserLogin interface {
