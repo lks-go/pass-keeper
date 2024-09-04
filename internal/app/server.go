@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/lks-go/pass-keeper/internal/app/setup"
 	"github.com/lks-go/pass-keeper/internal/lib/crypt"
 	"github.com/lks-go/pass-keeper/internal/lib/password"
 	"github.com/lks-go/pass-keeper/internal/lib/token"
@@ -50,7 +49,7 @@ func NewServerAPP(cfg *ServerAPPConfig) *ServerAPP {
 }
 
 func (app *ServerAPP) Build() error {
-	pool, err := setup.DB(app.config.DatabaseDSN)
+	pool, err := setupDB(app.config.DatabaseDSN)
 	if err != nil {
 		return fmt.Errorf("failed to setup DB: %w", err)
 	}
