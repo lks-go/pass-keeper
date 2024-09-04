@@ -66,15 +66,16 @@ func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, 
 	return &su, nil
 }
 
-func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.LoginPassData) error {
-	q := `INSERT INTO login_pass (owner, title, encrypted_login, encrypted_password) VALUES ($1, $2, $3, $4)`
+func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.LoginPassData) (int32, error) {
+	q := `INSERT INTO login_pass (owner, title, encrypted_login, encrypted_password) VALUES ($1, $2, $3, $4) RETURNING id`
 
-	_, err := s.db.ExecContext(ctx, q, owner, data.Title, data.Login, data.Password)
+	var id int32
+	err := s.db.QueryRowContext(ctx, q, owner, data.Title, data.Login, data.Password).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("failed to exec query: %w", err)
+		return 0, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
 func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.LoginPassData, error) {
@@ -120,4 +121,16 @@ func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*s
 	}
 
 	return &data, nil
+}
+
+func (s *Storage) AddText(ctx context.Context, owner string, data server.DataText) (int32, error) {
+	q := `INSERT INTO text (owner, title, encrypted_text) VALUES ($1, $2, $3) RETURNING id`
+
+	var id int32
+	err := s.db.QueryRowContext(ctx, q, owner, data.Title, data.Text).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	return id, nil
 }

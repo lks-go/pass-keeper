@@ -5,9 +5,12 @@ import "context"
 type Storage interface {
 	UserLogin
 	RegisterUser(ctx context.Context, login string, passwordHash string) (string, error)
-	AddLoginPass(ctx context.Context, owner string, data LoginPassData) error
+
+	AddLoginPass(ctx context.Context, owner string, data LoginPassData) (int32, error)
 	LoginPassList(ctx context.Context, owner string) ([]LoginPassData, error)
 	LoginPassByID(ctx context.Context, owner string, ID int32) (*LoginPassData, error)
+
+	AddText(ctx context.Context, owner string, data DataText) (int32, error)
 }
 
 type UserLogin interface {

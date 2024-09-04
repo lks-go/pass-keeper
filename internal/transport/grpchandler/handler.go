@@ -19,9 +19,11 @@ type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
 
-	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.LoginPassData) error
+	AddDataLoginPass(ctx context.Context, ownerLogin string, data server.LoginPassData) (int32, error)
 	DataLoginPassList(ctx context.Context, ownerLogin string) ([]server.LoginPassData, error)
 	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*server.LoginPassData, error)
+
+	AddDataText(ctx context.Context, ownerLogin string, data server.DataText) (int32, error)
 }
 
 func New(s Service) *Handler {
@@ -82,7 +84,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		Login:    request.Login,
 		Password: request.Pass,
 	}
-	err = h.service.AddDataLoginPass(ctx, ownerLogin, data)
+	id, err := h.service.AddDataLoginPass(ctx, ownerLogin, data)
 	if err != nil {
 		switch {
 		case errors.Is(err, server.ErrUserNotFound):
@@ -94,7 +96,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		}
 	}
 
-	return &grpc_api.AddDataResponse{}, nil
+	return &grpc_api.AddDataResponse{Id: id}, nil
 }
 
 func (h *Handler) GetDataLoginPassList(ctx context.Context, _ *grpc_api.GetDataListRequest) (*grpc_api.GetDataListResponse, error) {
@@ -158,6 +160,31 @@ func (h *Handler) GetDataLoginPass(ctx context.Context, request *grpc_api.GetDat
 	}
 
 	return &response, nil
+}
+
+func (h *Handler) AddDataText(ctx context.Context, request *grpc_api.AddDataTextRequest) (*grpc_api.AddDataResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	data := server.DataText{
+		Title: request.Title,
+		Text:  request.Text,
+	}
+	id, err := h.service.AddDataText(ctx, ownerLogin, data)
+	if err != nil {
+		switch {
+		case errors.Is(err, server.ErrUserNotFound):
+			log.Warn().Str("login", ownerLogin).Msg("user not found")
+			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+		default:
+			log.Error().Err(err).Msg("failed to add data login and pass")
+			return nil, status.Error(codes.Internal, (codes.Internal).String())
+		}
+	}
+
+	return &grpc_api.AddDataResponse{Id: id}, nil
 }
 
 func userLogin(ctx context.Context) (string, error) {

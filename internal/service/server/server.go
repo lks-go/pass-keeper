@@ -49,27 +49,28 @@ type LoginPassData struct {
 	Password string
 }
 
-func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data LoginPassData) error {
+func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data LoginPassData) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
-		return fmt.Errorf("failed to get user by login: %w", err)
+		return 0, fmt.Errorf("failed to get user by login: %w", err)
 	}
 
 	data.Login, err = s.Crypt.Encrypt(data.Login)
 	if err != nil {
-		return fmt.Errorf("failed to encrypt login: %w", err)
+		return 0, fmt.Errorf("failed to encrypt login: %w", err)
 	}
 
 	data.Password, err = s.Crypt.Encrypt(data.Password)
 	if err != nil {
-		return fmt.Errorf("failed to encrypt password: %w", err)
+		return 0, fmt.Errorf("failed to encrypt password: %w", err)
 	}
 
-	if err := s.Storage.AddLoginPass(ctx, u.ID, data); err != nil {
-		return fmt.Errorf("failed to add data: %w", err)
+	id, err := s.Storage.AddLoginPass(ctx, u.ID, data)
+	if err != nil {
+		return 0, fmt.Errorf("failed to add data: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
 func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]LoginPassData, error) {
@@ -108,4 +109,29 @@ func (s *Service) DataLoginPass(ctx context.Context, ownerLogin string, ID int32
 	}
 
 	return data, nil
+}
+
+type DataText struct {
+	ID    int32
+	Title string
+	Text  string
+}
+
+func (s *Service) AddDataText(ctx context.Context, ownerLogin string, data DataText) (int32, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	data.Text, err = s.Crypt.Encrypt(data.Text)
+	if err != nil {
+		return 0, fmt.Errorf("failed to encrypt text: %w", err)
+	}
+
+	id, err := s.Storage.AddText(ctx, u.ID, data)
+	if err != nil {
+		return 0, fmt.Errorf("failed to add text to storage: %w", err)
+	}
+
+	return id, nil
 }

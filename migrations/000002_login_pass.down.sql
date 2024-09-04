@@ -1,1 +1,1 @@
-DROP TABLE data_user_pass;
+DROP TABLE login_pass;
