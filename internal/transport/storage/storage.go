@@ -192,3 +192,32 @@ func (s *Storage) AddCard(ctx context.Context, owner string, data *server.DataCa
 
 	return id, nil
 }
+
+func (s *Storage) CardList(ctx context.Context, owner string) ([]server.DataCard, error) {
+	q := `SELECT id, title FROM card WHERE owner = $1`
+
+	rows, err := s.db.QueryContext(ctx, q, owner)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, server.ErrNoData
+		}
+
+		return nil, fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	data := make([]server.DataCard, 0)
+	for rows.Next() {
+		d := server.DataCard{}
+		if err := rows.Scan(&d.ID, &d.Title); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		data = append(data, d)
+	}
+
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close rows: %w", err)
+	}
+
+	return data, nil
+}

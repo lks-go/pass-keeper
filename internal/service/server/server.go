@@ -81,7 +81,7 @@ func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]D
 
 	data, err := s.Storage.LoginPassList(ctx, u.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get data list: %w", err)
+		return nil, fmt.Errorf("failed to get login & pass list: %w", err)
 	}
 
 	return data, nil
@@ -220,4 +220,18 @@ func (s *Service) encryptCardData(data *DataCard) error {
 	}
 
 	return nil
+}
+
+func (s *Service) DataCardList(ctx context.Context, ownerLogin string) ([]DataCard, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	data, err := s.Storage.CardList(ctx, u.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get card list: %w", err)
+	}
+
+	return data, nil
 }
