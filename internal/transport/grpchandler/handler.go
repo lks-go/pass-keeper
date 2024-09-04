@@ -83,7 +83,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 	if err != nil {
 		switch {
 		case errors.Is(err, server.ErrUserNotFound):
-			log.Warn().Str("login", request.Login).Msg("user not found")
+			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
 		default:
 			log.Error().Err(err).Msg("failed to add data login and pass")
@@ -103,7 +103,10 @@ func (h *Handler) GetDataLoginPassList(ctx context.Context, _ *grpc_api.GetDataL
 	data, err := h.service.DataLoginPassList(ctx, ownerLogin)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrNotFound):
+		case errors.Is(err, server.ErrUserNotFound):
+			log.Warn().Str("login", ownerLogin).Msg("user not found")
+			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+		case errors.Is(err, server.ErrNoData):
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
 			log.Error().Err(err).Msg("failed to get login and pass list")
@@ -113,13 +116,12 @@ func (h *Handler) GetDataLoginPassList(ctx context.Context, _ *grpc_api.GetDataL
 
 	list := make([]*grpc_api.GetDataLoginPassListResponse_Data, 0, len(data))
 	for _, d := range data {
-		grpcData := grpc_api.GetDataLoginPassListResponse_Data{
+		respData := grpc_api.GetDataLoginPassListResponse_Data{
+			Id:    d.ID,
 			Title: d.Title,
-			Login: d.Login,
-			Pass:  d.Password,
 		}
 
-		list = append(list, &grpcData)
+		list = append(list, &respData)
 	}
 
 	return &grpc_api.GetDataLoginPassListResponse{List: list}, nil

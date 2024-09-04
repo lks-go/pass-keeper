@@ -34,9 +34,8 @@ message GetDataLoginPassListResponse {
   repeated Data list = 1;
 
   message Data {
-    string title = 1;
-    string login = 2;
-    string pass = 3;
+    int32 id = 1;
+    string title = 2;
   }
 }
 

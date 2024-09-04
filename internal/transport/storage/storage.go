@@ -78,12 +78,12 @@ func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.Da
 }
 
 func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Data, error) {
-	q := `SELECT id, title, encrypted_login, encrypted_password FROM login_pass WHERE owner = $1`
+	q := `SELECT id, title FROM login_pass WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrNotFound
+			return nil, server.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
@@ -92,7 +92,7 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Dat
 	data := make([]server.Data, 0)
 	for rows.Next() {
 		d := server.Data{}
-		if err := rows.Scan(&d.ID, &d.Title, &d.Login, &d.Password); err != nil {
+		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 

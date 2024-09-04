@@ -94,18 +94,5 @@ func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]D
 		return nil, fmt.Errorf("failed to get data list: %w", err)
 	}
 
-	for idx := range data {
-		data[idx].Login, err = s.Crypt.Decrypt(data[idx].Login)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt login: %w", err)
-		}
-
-		data[idx].Password, err = s.Crypt.Decrypt(data[idx].Password)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt password: %w", err)
-		}
-
-	}
-
 	return data, nil
 }
