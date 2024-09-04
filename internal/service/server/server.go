@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/lks-go/pass-keeper/internal/lib/token"
@@ -43,22 +42,17 @@ func (s *Service) AuthUser(ctx context.Context, login string, password string) (
 	return token, nil
 }
 
-type Data struct {
+type LoginPassData struct {
 	ID       int32
 	Title    string
 	Login    string
 	Password string
 }
 
-func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data Data) error {
+func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data LoginPassData) error {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrNotFound):
-			return ErrUserNotFound
-		default:
-			return fmt.Errorf("failed to get user by login")
-		}
+		return fmt.Errorf("failed to get user by login: %w", err)
 	}
 
 	data.Login, err = s.Crypt.Encrypt(data.Login)
@@ -78,20 +72,39 @@ func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data 
 	return nil
 }
 
-func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]Data, error) {
+func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]LoginPassData, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrNotFound):
-			return nil, ErrUserNotFound
-		default:
-			return nil, fmt.Errorf("failed to get user by login")
-		}
+		return nil, fmt.Errorf("failed to get user by login: %w", err)
 	}
 
 	data, err := s.Storage.LoginPassList(ctx, u.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get data list: %w", err)
+	}
+
+	return data, nil
+}
+
+func (s *Service) DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*LoginPassData, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	data, err := s.Storage.LoginPassByID(ctx, u.ID, ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get login&password: %w", err)
+	}
+
+	data.Login, err = s.Crypt.Decrypt(data.Login)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt login: %w", err)
+	}
+
+	data.Password, err = s.Crypt.Decrypt(data.Password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt password: %w", err)
 	}
 
 	return data, nil

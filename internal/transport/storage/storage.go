@@ -51,7 +51,7 @@ func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, 
 	u := user{}
 	if err := s.db.QueryRowContext(ctx, q, login).Scan(&u.ID, &u.Login, &u.PasswordHash); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrNotFound
+			return nil, server.ErrUserNotFound
 		}
 
 		return nil, fmt.Errorf("query row error: %w", err)
@@ -66,7 +66,7 @@ func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, 
 	return &su, nil
 }
 
-func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.Data) error {
+func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.LoginPassData) error {
 	q := `INSERT INTO login_pass (owner, title, encrypted_login, encrypted_password) VALUES ($1, $2, $3, $4)`
 
 	_, err := s.db.ExecContext(ctx, q, owner, data.Title, data.Login, data.Password)
@@ -77,7 +77,7 @@ func (s *Storage) AddLoginPass(ctx context.Context, owner string, data server.Da
 	return nil
 }
 
-func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Data, error) {
+func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.LoginPassData, error) {
 	q := `SELECT id, title FROM login_pass WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
@@ -89,9 +89,9 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Dat
 		return nil, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	data := make([]server.Data, 0)
+	data := make([]server.LoginPassData, 0)
 	for rows.Next() {
-		d := server.Data{}
+		d := server.LoginPassData{}
 		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -104,4 +104,20 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Dat
 	}
 
 	return data, nil
+}
+
+func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*server.LoginPassData, error) {
+	q := `SELECT id, title, encrypted_login, encrypted_password FROM login_pass WHERE id = $1 AND owner = $2`
+
+	data := server.LoginPassData{}
+	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Login, &data.Password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, server.ErrNoData
+		}
+
+		return nil, fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	return &data, nil
 }

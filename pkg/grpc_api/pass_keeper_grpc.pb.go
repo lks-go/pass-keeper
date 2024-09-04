@@ -23,6 +23,13 @@ const (
 	PassKeeper_AuthUser_FullMethodName             = "/pass.keeper.PassKeeper/AuthUser"
 	PassKeeper_AddDataLoginPass_FullMethodName     = "/pass.keeper.PassKeeper/AddDataLoginPass"
 	PassKeeper_GetDataLoginPassList_FullMethodName = "/pass.keeper.PassKeeper/GetDataLoginPassList"
+	PassKeeper_GetDataLoginPass_FullMethodName     = "/pass.keeper.PassKeeper/GetDataLoginPass"
+	PassKeeper_AddDataText_FullMethodName          = "/pass.keeper.PassKeeper/AddDataText"
+	PassKeeper_GetDataTextList_FullMethodName      = "/pass.keeper.PassKeeper/GetDataTextList"
+	PassKeeper_GetDataText_FullMethodName          = "/pass.keeper.PassKeeper/GetDataText"
+	PassKeeper_AddDataCard_FullMethodName          = "/pass.keeper.PassKeeper/AddDataCard"
+	PassKeeper_GetDataCardList_FullMethodName      = "/pass.keeper.PassKeeper/GetDataCardList"
+	PassKeeper_GetDataCard_FullMethodName          = "/pass.keeper.PassKeeper/GetDataCard"
 )
 
 // PassKeeperClient is the client API for PassKeeper service.
@@ -31,8 +38,15 @@ const (
 type PassKeeperClient interface {
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error)
 	AuthUser(ctx context.Context, in *AuthUserRequest, opts ...grpc.CallOption) (*AuthUserResponse, error)
-	AddDataLoginPass(ctx context.Context, in *AddDataLoginPassRequest, opts ...grpc.CallOption) (*AddDataLoginPassResponse, error)
-	GetDataLoginPassList(ctx context.Context, in *GetDataLoginPassListRequest, opts ...grpc.CallOption) (*GetDataLoginPassListResponse, error)
+	AddDataLoginPass(ctx context.Context, in *AddDataLoginPassRequest, opts ...grpc.CallOption) (*AddDataResponse, error)
+	GetDataLoginPassList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error)
+	GetDataLoginPass(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataLoginPassResponse, error)
+	AddDataText(ctx context.Context, in *AddDataTextRequest, opts ...grpc.CallOption) (*AddDataResponse, error)
+	GetDataTextList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error)
+	GetDataText(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataTextResponse, error)
+	AddDataCard(ctx context.Context, in *AddDataCardRequest, opts ...grpc.CallOption) (*AddDataResponse, error)
+	GetDataCardList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error)
+	GetDataCard(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataCardResponse, error)
 }
 
 type passKeeperClient struct {
@@ -63,9 +77,9 @@ func (c *passKeeperClient) AuthUser(ctx context.Context, in *AuthUserRequest, op
 	return out, nil
 }
 
-func (c *passKeeperClient) AddDataLoginPass(ctx context.Context, in *AddDataLoginPassRequest, opts ...grpc.CallOption) (*AddDataLoginPassResponse, error) {
+func (c *passKeeperClient) AddDataLoginPass(ctx context.Context, in *AddDataLoginPassRequest, opts ...grpc.CallOption) (*AddDataResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddDataLoginPassResponse)
+	out := new(AddDataResponse)
 	err := c.cc.Invoke(ctx, PassKeeper_AddDataLoginPass_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -73,10 +87,80 @@ func (c *passKeeperClient) AddDataLoginPass(ctx context.Context, in *AddDataLogi
 	return out, nil
 }
 
-func (c *passKeeperClient) GetDataLoginPassList(ctx context.Context, in *GetDataLoginPassListRequest, opts ...grpc.CallOption) (*GetDataLoginPassListResponse, error) {
+func (c *passKeeperClient) GetDataLoginPassList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetDataLoginPassListResponse)
+	out := new(GetDataListResponse)
 	err := c.cc.Invoke(ctx, PassKeeper_GetDataLoginPassList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *passKeeperClient) GetDataLoginPass(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataLoginPassResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDataLoginPassResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_GetDataLoginPass_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *passKeeperClient) AddDataText(ctx context.Context, in *AddDataTextRequest, opts ...grpc.CallOption) (*AddDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddDataResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_AddDataText_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *passKeeperClient) GetDataTextList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDataListResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_GetDataTextList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *passKeeperClient) GetDataText(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataTextResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDataTextResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_GetDataText_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *passKeeperClient) AddDataCard(ctx context.Context, in *AddDataCardRequest, opts ...grpc.CallOption) (*AddDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddDataResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_AddDataCard_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *passKeeperClient) GetDataCardList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDataListResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_GetDataCardList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *passKeeperClient) GetDataCard(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataCardResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDataCardResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_GetDataCard_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +173,15 @@ func (c *passKeeperClient) GetDataLoginPassList(ctx context.Context, in *GetData
 type PassKeeperServer interface {
 	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error)
 	AuthUser(context.Context, *AuthUserRequest) (*AuthUserResponse, error)
-	AddDataLoginPass(context.Context, *AddDataLoginPassRequest) (*AddDataLoginPassResponse, error)
-	GetDataLoginPassList(context.Context, *GetDataLoginPassListRequest) (*GetDataLoginPassListResponse, error)
+	AddDataLoginPass(context.Context, *AddDataLoginPassRequest) (*AddDataResponse, error)
+	GetDataLoginPassList(context.Context, *GetDataListRequest) (*GetDataListResponse, error)
+	GetDataLoginPass(context.Context, *GetDataRequest) (*GetDataLoginPassResponse, error)
+	AddDataText(context.Context, *AddDataTextRequest) (*AddDataResponse, error)
+	GetDataTextList(context.Context, *GetDataListRequest) (*GetDataListResponse, error)
+	GetDataText(context.Context, *GetDataRequest) (*GetDataTextResponse, error)
+	AddDataCard(context.Context, *AddDataCardRequest) (*AddDataResponse, error)
+	GetDataCardList(context.Context, *GetDataListRequest) (*GetDataListResponse, error)
+	GetDataCard(context.Context, *GetDataRequest) (*GetDataCardResponse, error)
 	mustEmbedUnimplementedPassKeeperServer()
 }
 
@@ -107,11 +198,32 @@ func (UnimplementedPassKeeperServer) RegisterUser(context.Context, *RegisterUser
 func (UnimplementedPassKeeperServer) AuthUser(context.Context, *AuthUserRequest) (*AuthUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthUser not implemented")
 }
-func (UnimplementedPassKeeperServer) AddDataLoginPass(context.Context, *AddDataLoginPassRequest) (*AddDataLoginPassResponse, error) {
+func (UnimplementedPassKeeperServer) AddDataLoginPass(context.Context, *AddDataLoginPassRequest) (*AddDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddDataLoginPass not implemented")
 }
-func (UnimplementedPassKeeperServer) GetDataLoginPassList(context.Context, *GetDataLoginPassListRequest) (*GetDataLoginPassListResponse, error) {
+func (UnimplementedPassKeeperServer) GetDataLoginPassList(context.Context, *GetDataListRequest) (*GetDataListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDataLoginPassList not implemented")
+}
+func (UnimplementedPassKeeperServer) GetDataLoginPass(context.Context, *GetDataRequest) (*GetDataLoginPassResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataLoginPass not implemented")
+}
+func (UnimplementedPassKeeperServer) AddDataText(context.Context, *AddDataTextRequest) (*AddDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddDataText not implemented")
+}
+func (UnimplementedPassKeeperServer) GetDataTextList(context.Context, *GetDataListRequest) (*GetDataListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataTextList not implemented")
+}
+func (UnimplementedPassKeeperServer) GetDataText(context.Context, *GetDataRequest) (*GetDataTextResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataText not implemented")
+}
+func (UnimplementedPassKeeperServer) AddDataCard(context.Context, *AddDataCardRequest) (*AddDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddDataCard not implemented")
+}
+func (UnimplementedPassKeeperServer) GetDataCardList(context.Context, *GetDataListRequest) (*GetDataListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataCardList not implemented")
+}
+func (UnimplementedPassKeeperServer) GetDataCard(context.Context, *GetDataRequest) (*GetDataCardResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataCard not implemented")
 }
 func (UnimplementedPassKeeperServer) mustEmbedUnimplementedPassKeeperServer() {}
 func (UnimplementedPassKeeperServer) testEmbeddedByValue()                    {}
@@ -189,7 +301,7 @@ func _PassKeeper_AddDataLoginPass_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _PassKeeper_GetDataLoginPassList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDataLoginPassListRequest)
+	in := new(GetDataListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -201,7 +313,133 @@ func _PassKeeper_GetDataLoginPassList_Handler(srv interface{}, ctx context.Conte
 		FullMethod: PassKeeper_GetDataLoginPassList_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PassKeeperServer).GetDataLoginPassList(ctx, req.(*GetDataLoginPassListRequest))
+		return srv.(PassKeeperServer).GetDataLoginPassList(ctx, req.(*GetDataListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PassKeeper_GetDataLoginPass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).GetDataLoginPass(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_GetDataLoginPass_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).GetDataLoginPass(ctx, req.(*GetDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PassKeeper_AddDataText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddDataTextRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).AddDataText(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_AddDataText_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).AddDataText(ctx, req.(*AddDataTextRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PassKeeper_GetDataTextList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).GetDataTextList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_GetDataTextList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).GetDataTextList(ctx, req.(*GetDataListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PassKeeper_GetDataText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).GetDataText(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_GetDataText_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).GetDataText(ctx, req.(*GetDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PassKeeper_AddDataCard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddDataCardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).AddDataCard(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_AddDataCard_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).AddDataCard(ctx, req.(*AddDataCardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PassKeeper_GetDataCardList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).GetDataCardList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_GetDataCardList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).GetDataCardList(ctx, req.(*GetDataListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PassKeeper_GetDataCard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).GetDataCard(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_GetDataCard_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).GetDataCard(ctx, req.(*GetDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -228,6 +466,34 @@ var PassKeeper_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDataLoginPassList",
 			Handler:    _PassKeeper_GetDataLoginPassList_Handler,
+		},
+		{
+			MethodName: "GetDataLoginPass",
+			Handler:    _PassKeeper_GetDataLoginPass_Handler,
+		},
+		{
+			MethodName: "AddDataText",
+			Handler:    _PassKeeper_AddDataText_Handler,
+		},
+		{
+			MethodName: "GetDataTextList",
+			Handler:    _PassKeeper_GetDataTextList_Handler,
+		},
+		{
+			MethodName: "GetDataText",
+			Handler:    _PassKeeper_GetDataText_Handler,
+		},
+		{
+			MethodName: "AddDataCard",
+			Handler:    _PassKeeper_AddDataCard_Handler,
+		},
+		{
+			MethodName: "GetDataCardList",
+			Handler:    _PassKeeper_GetDataCardList_Handler,
+		},
+		{
+			MethodName: "GetDataCard",
+			Handler:    _PassKeeper_GetDataCard_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -26,11 +26,50 @@ message AddDataLoginPassRequest {
   string pass = 3;
 }
 
-message AddDataLoginPassResponse {}
+message GetDataLoginPassResponse {
+  int32 id = 1;
+  string title = 2;
+  string login = 3;
+  string pass = 4;
+}
 
-message GetDataLoginPassListRequest {}
+message AddDataTextRequest {
+  string title = 1;
+  string text = 2;
+}
 
-message GetDataLoginPassListResponse {
+message GetDataTextResponse {
+  string id = 1;
+  string title = 2;
+  string text = 3;
+}
+
+message AddDataCardRequest {
+  string title = 1;
+  string number = 2;
+  string owner = 3;
+  string valid = 4;
+  int32 cvc = 5;
+}
+
+message GetDataCardResponse {
+  int32 id = 1;
+  string title = 2;
+  string number = 3;
+  string owner = 4;
+  string valid = 5;
+  int32 code = 6;
+}
+
+
+// Common messages that have the same fields for different request types
+message GetDataRequest {
+  int32 id = 1;
+}
+
+message GetDataListRequest {}
+
+message GetDataListResponse {
   repeated Data list = 1;
 
   message Data {
@@ -39,9 +78,23 @@ message GetDataLoginPassListResponse {
   }
 }
 
+message AddDataResponse{
+  int32 id = 1;
+}
+
 service PassKeeper {
   rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
   rpc AuthUser(AuthUserRequest) returns (AuthUserResponse);
-  rpc AddDataLoginPass(AddDataLoginPassRequest) returns (AddDataLoginPassResponse);
-  rpc GetDataLoginPassList(GetDataLoginPassListRequest) returns (GetDataLoginPassListResponse);
+
+  rpc AddDataLoginPass(AddDataLoginPassRequest) returns (AddDataResponse);
+  rpc GetDataLoginPassList(GetDataListRequest) returns (GetDataListResponse);
+  rpc GetDataLoginPass(GetDataRequest) returns (GetDataLoginPassResponse);
+
+  rpc AddDataText(AddDataTextRequest) returns (AddDataResponse);
+  rpc GetDataTextList(GetDataListRequest) returns (GetDataListResponse);
+  rpc GetDataText(GetDataRequest) returns (GetDataTextResponse);
+
+  rpc AddDataCard(AddDataCardRequest) returns (AddDataResponse);
+  rpc GetDataCardList(GetDataListRequest) returns (GetDataListResponse);
+  rpc GetDataCard(GetDataRequest) returns (GetDataCardResponse);
 }
