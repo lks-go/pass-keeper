@@ -1,4 +1,4 @@
-package app
+package backend
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 	"github.com/lks-go/pass-keeper/pkg/grpc_api"
 )
 
-type ServerAPPConfig struct {
+type Config struct {
 	GRPCNetAddress      string        `env:"GRPC_NET_ADDRESS" env-default:":9000"`
 	DatabaseDSN         string        `env:"DATABASE_DSN" env-required:"true"`
 	UserPassSalt        string        `env:"USER_PASS_SALT" env-required:"true"`
@@ -35,20 +35,20 @@ type ServerAPPConfig struct {
 	CryptSecretKey      string        `env:"CRYPT_SECRET_KEY" env-required:"true"`
 }
 
-type ServerAPP struct {
+type App struct {
 	grpcHandler     grpc_api.PassKeeperServer
 	pool            *sql.DB
 	authInterceptor *interceptor.Auth
-	config          *ServerAPPConfig
+	config          *Config
 }
 
-func NewServerAPP(cfg *ServerAPPConfig) *ServerAPP {
-	return &ServerAPP{
+func New(cfg *Config) *App {
+	return &App{
 		config: cfg,
 	}
 }
 
-func (app *ServerAPP) Build() error {
+func (app *App) Build() error {
 	pool, err := setupDB(app.config.DatabaseDSN)
 	if err != nil {
 		return fmt.Errorf("failed to setup DB: %w", err)
@@ -88,7 +88,7 @@ func (app *ServerAPP) Build() error {
 	return nil
 }
 
-func (app *ServerAPP) Run() error {
+func (app *App) Run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer stop()
 
@@ -109,7 +109,7 @@ func (app *ServerAPP) Run() error {
 	return nil
 }
 
-func (app *ServerAPP) Exit() error {
+func (app *App) Exit() error {
 	if err := app.pool.Close(); err != nil {
 		return fmt.Errorf("failed to close pool: %w", err)
 	}
@@ -117,7 +117,7 @@ func (app *ServerAPP) Exit() error {
 	return nil
 }
 
-func (app *ServerAPP) startGRPCServer(ctx context.Context) error {
+func (app *App) startGRPCServer(ctx context.Context) error {
 	listen, err := net.Listen("tcp", app.config.GRPCNetAddress)
 	if err != nil {
 		return fmt.Errorf("filed to start listen address %s: %w", app.config.GRPCNetAddress, err)

@@ -1,4 +1,4 @@
-package app
+package backend
 
 import (
 	"log"
@@ -6,8 +6,8 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-func SetupServerAPPConfig() *ServerAPPConfig {
-	cfg := ServerAPPConfig{}
+func SetupServerAPPConfig() *Config {
+	cfg := Config{}
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		log.Fatalf("failed to read app config: %s", err)
 	}

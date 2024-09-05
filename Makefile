@@ -38,5 +38,8 @@ generate_grpc:
 run_server:
 	go run cmd/server/main.go
 
+run_client:
+	go run cmd/client/main.go
+
 new_migration:
 	$(GOPATH)/bin/migrate create -ext sql -dir ./migrations -seq $(filter-out $@, $(MAKECMDGOALS))

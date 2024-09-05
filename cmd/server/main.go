@@ -4,27 +4,27 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/lks-go/pass-keeper/internal/app"
+	"github.com/lks-go/pass-keeper/internal/app/backend"
 )
 
 func main() {
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
 	log.Info().Msg("Setup config")
-	cfg := app.SetupServerAPPConfig()
+	cfg := backend.SetupServerAPPConfig()
 
-	log.Info().Msg("Build service")
-	app := app.NewServerAPP(cfg)
+	log.Info().Msg("Building app")
+	app := backend.New(cfg)
 	if err := app.Build(); err != nil {
 		log.Error().Err(err).Msg("filed to build app")
 		return
 	}
 
-	log.Info().Msg("Running service")
+	log.Info().Msg("Running app")
 	if err := app.Run(); err != nil {
 		log.Error().Err(err).Msg("filed to build app")
 		return
 	}
 
-	log.Info().Msg("Service successfully stopped")
+	log.Info().Msg("App successfully stopped")
 }
