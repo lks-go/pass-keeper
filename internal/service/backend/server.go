@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lks-go/pass-keeper/internal/lib/token"
+	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
 type Service struct {
@@ -31,7 +32,7 @@ func (s *Service) AuthUser(ctx context.Context, login string, password string) (
 	}
 
 	if s.Password.Hash(password) != u.PasswordHash {
-		return "", ErrUsersPasswordNotMatch
+		return "", entity.ErrUsersPasswordNotMatch
 	}
 
 	token, err := s.Token.BuildNewJWTToken(login)

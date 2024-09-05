@@ -48,7 +48,7 @@ func (h *Handler) RegisterUser(ctx context.Context, request *grpc_api.RegisterUs
 	userId, err := h.service.RegisterUser(ctx, request.Login, request.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, backend.ErrAlreadyExists):
+		case errors.Is(err, entity.ErrAlreadyExists):
 			return nil, status.Error(codes.AlreadyExists, (codes.AlreadyExists).String())
 		default:
 			log.Error().Err(err)
@@ -65,9 +65,9 @@ func (h *Handler) AuthUser(ctx context.Context, request *grpc_api.AuthUserReques
 	jwtString, err := h.service.AuthUser(ctx, request.Login, request.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, backend.ErrUsersPasswordNotMatch):
+		case errors.Is(err, entity.ErrUsersPasswordNotMatch):
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-		case errors.Is(err, backend.ErrUserNotFound):
+		case errors.Is(err, entity.ErrUserNotFound):
 			log.Warn().Str("login", request.Login).Msg("user not found")
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
@@ -93,7 +93,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 	id, err := h.service.AddDataLoginPass(ctx, ownerLogin, &data)
 	if err != nil {
 		switch {
-		case errors.Is(err, backend.ErrUserNotFound):
+		case errors.Is(err, entity.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
 		default:
@@ -114,10 +114,10 @@ func (h *Handler) GetDataLoginPassList(ctx context.Context, _ *grpc_api.GetDataL
 	data, err := h.service.DataLoginPassList(ctx, ownerLogin)
 	if err != nil {
 		switch {
-		case errors.Is(err, backend.ErrUserNotFound):
+		case errors.Is(err, entity.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-		case errors.Is(err, backend.ErrNoData):
+		case errors.Is(err, entity.ErrNoData):
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
 			log.Error().Err(err).Msg("failed to get login and pass list")
@@ -147,10 +147,10 @@ func (h *Handler) GetDataLoginPass(ctx context.Context, request *grpc_api.GetDat
 	data, err := h.service.DataLoginPass(ctx, ownerLogin, request.Id)
 	if err != nil {
 		switch {
-		case errors.Is(err, backend.ErrUserNotFound):
+		case errors.Is(err, entity.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-		case errors.Is(err, backend.ErrNoData):
+		case errors.Is(err, entity.ErrNoData):
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
 			log.Error().Err(err).Msg("failed to get login and pass list")
@@ -181,7 +181,7 @@ func (h *Handler) AddDataText(ctx context.Context, request *grpc_api.AddDataText
 	id, err := h.service.AddDataText(ctx, ownerLogin, &data)
 	if err != nil {
 		switch {
-		case errors.Is(err, backend.ErrUserNotFound):
+		case errors.Is(err, entity.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
 		default:
@@ -203,10 +203,10 @@ func (h *Handler) GetDataTextList(ctx context.Context, _ *grpc_api.GetDataListRe
 	if err != nil {
 		if err != nil {
 			switch {
-			case errors.Is(err, backend.ErrUserNotFound):
+			case errors.Is(err, entity.ErrUserNotFound):
 				log.Warn().Str("login", ownerLogin).Msg("user not found")
 				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-			case errors.Is(err, backend.ErrNoData):
+			case errors.Is(err, entity.ErrNoData):
 				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 			default:
 				log.Error().Err(err).Msg("failed to get text list")
@@ -238,10 +238,10 @@ func (h *Handler) GetDataText(ctx context.Context, request *grpc_api.GetDataRequ
 	if err != nil {
 		if err != nil {
 			switch {
-			case errors.Is(err, backend.ErrUserNotFound):
+			case errors.Is(err, entity.ErrUserNotFound):
 				log.Warn().Str("login", ownerLogin).Msg("user not found")
 				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-			case errors.Is(err, backend.ErrNoData):
+			case errors.Is(err, entity.ErrNoData):
 				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 			default:
 				log.Error().Err(err).Msg("failed to get text")
@@ -275,7 +275,7 @@ func (h *Handler) AddDataCard(ctx context.Context, request *grpc_api.AddDataCard
 	id, err := h.service.AddDataCard(ctx, ownerLogin, &data)
 	if err != nil {
 		switch {
-		case errors.Is(err, backend.ErrUserNotFound):
+		case errors.Is(err, entity.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
 		default:
@@ -296,10 +296,10 @@ func (h *Handler) GetDataCardList(ctx context.Context, _ *grpc_api.GetDataListRe
 	data, err := h.service.DataCardList(ctx, ownerLogin)
 	if err != nil {
 		switch {
-		case errors.Is(err, backend.ErrUserNotFound):
+		case errors.Is(err, entity.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-		case errors.Is(err, backend.ErrNoData):
+		case errors.Is(err, entity.ErrNoData):
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
 			log.Error().Err(err).Msg("failed to get card list")
@@ -330,10 +330,10 @@ func (h *Handler) GetDataCard(ctx context.Context, request *grpc_api.GetDataRequ
 	if err != nil {
 		if err != nil {
 			switch {
-			case errors.Is(err, backend.ErrUserNotFound):
+			case errors.Is(err, entity.ErrUserNotFound):
 				log.Warn().Str("login", ownerLogin).Msg("user not found")
 				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-			case errors.Is(err, backend.ErrNoData):
+			case errors.Is(err, entity.ErrNoData):
 				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 			default:
 				log.Error().Err(err).Msg("failed to get card")

@@ -1,6 +1,10 @@
 package backend
 
-import "context"
+import (
+	"context"
+
+	"github.com/lks-go/pass-keeper/internal/service/entity"
+)
 
 type Storage interface {
 	UserLogin
@@ -20,7 +24,7 @@ type Storage interface {
 }
 
 type UserLogin interface {
-	UserByLogin(ctx context.Context, login string) (*User, error)
+	UserByLogin(ctx context.Context, login string) (*entity.User, error)
 }
 
 type PasswordHash interface {

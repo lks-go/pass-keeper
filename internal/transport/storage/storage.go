@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/lks-go/pass-keeper/internal/service/backend"
+	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
 func New(db *sql.DB) *Storage {
@@ -35,7 +36,7 @@ func (s *Storage) RegisterUser(ctx context.Context, login string, passwordHash s
 	if err != nil {
 		if err, ok := err.(*pgconn.PgError); ok {
 			if err.Code == pgerrcode.UniqueViolation {
-				return "", backend.ErrAlreadyExists
+				return "", entity.ErrAlreadyExists
 			}
 		}
 
@@ -45,19 +46,19 @@ func (s *Storage) RegisterUser(ctx context.Context, login string, passwordHash s
 	return id, nil
 }
 
-func (s *Storage) UserByLogin(ctx context.Context, login string) (*backend.User, error) {
+func (s *Storage) UserByLogin(ctx context.Context, login string) (*entity.User, error) {
 	q := `SELECT id, login, password_hash FROM users WHERE login = $1;`
 
 	u := user{}
 	if err := s.db.QueryRowContext(ctx, q, login).Scan(&u.ID, &u.Login, &u.PasswordHash); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, backend.ErrUserNotFound
+			return nil, entity.ErrUserNotFound
 		}
 
 		return nil, fmt.Errorf("query row error: %w", err)
 	}
 
-	su := backend.User{
+	su := entity.User{
 		ID:           u.ID,
 		Login:        u.Login,
 		PasswordHash: u.PasswordHash,
@@ -84,7 +85,7 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]backend.Da
 	rows, err := s.db.QueryContext(ctx, q, owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, backend.ErrNoData
+			return nil, entity.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
@@ -114,7 +115,7 @@ func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*b
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Login, &data.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, backend.ErrNoData
+			return nil, entity.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
@@ -141,7 +142,7 @@ func (s *Storage) TextList(ctx context.Context, owner string) ([]backend.DataTex
 	rows, err := s.db.QueryContext(ctx, q, owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, backend.ErrNoData
+			return nil, entity.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
@@ -171,7 +172,7 @@ func (s *Storage) TextByID(ctx context.Context, owner string, ID int32) (*backen
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Text)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, backend.ErrNoData
+			return nil, entity.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
@@ -199,7 +200,7 @@ func (s *Storage) CardList(ctx context.Context, owner string) ([]backend.DataCar
 	rows, err := s.db.QueryContext(ctx, q, owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, backend.ErrNoData
+			return nil, entity.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
@@ -229,7 +230,7 @@ func (s *Storage) CardByID(ctx context.Context, owner string, ID int32) (*backen
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Number, &data.Owner, &data.ExpDate, &data.CVCCode)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, backend.ErrNoData
+			return nil, entity.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
