@@ -1,43 +1,68 @@
-package app
+package client
 
 import (
-	"bufio"
+	"context"
 	"fmt"
-	"os"
-	"strings"
+	"os/signal"
+	"syscall"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/lks-go/pass-keeper/internal/service/client"
+	"github.com/lks-go/pass-keeper/internal/transport/backend_client"
 )
 
-type ClientAPPConfig struct {
+type App struct {
+	cfg    *Config
+	client *client.Client
 }
 
-type ClientAPP struct {
-	cfg *ClientAPPConfig
-}
-
-func NewClientAPP(cfg *ClientAPPConfig) *ClientAPP {
-	return &ClientAPP{
+func New(cfg *Config) *App {
+	return &App{
 		cfg: cfg,
 	}
 }
 
-func (app *ClientAPP) Build() error {
+func (app *App) Build() error {
+
+	backendClientConfig := backend_client.Config{
+		Host:      app.cfg.ServerHost,
+		CertPath:  app.cfg.ServerCertPath,
+		EnableTLS: app.cfg.EnableTLS,
+	}
+	backendClient, err := backend_client.New(&backendClientConfig)
+	if err != nil {
+		return fmt.Errorf("failed to get backend client: %w", err)
+	}
+
+	clientDeps := client.Deps{
+		LoginPassClient: backendClient,
+	}
+	app.client = client.New(clientDeps)
 
 	return nil
 }
 
-func (app *ClientAPP) Run() error {
+func (app *App) Run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer stop()
 
-	r := bufio.NewReader(os.Stdin)
-	var s string
+	g, ctx := errgroup.WithContext(ctx)
 
-	for {
-		fmt.Fprintf(os.Stderr, "input command")
-		s, _ = r.ReadString('\n')
-		s = strings.TrimSpace(s)
+	g.Go(func() error {
+		if err := app.client.Run(ctx); err != nil {
+			return fmt.Errorf("failed to run client: %w", err)
+		}
 
-		fmt.Printf("command is: %s\n", s)
+		stop()
 
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("group error: %w", err)
 	}
 
 	return nil
+
 }

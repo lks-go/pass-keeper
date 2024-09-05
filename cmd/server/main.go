@@ -11,7 +11,7 @@ func main() {
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
 	log.Info().Msg("Setup config")
-	cfg := backend.SetupServerAPPConfig()
+	cfg := backend.SetupConfig()
 
 	log.Info().Msg("Building app")
 	app := backend.New(cfg)

@@ -67,7 +67,7 @@ func (s *Storage) UserByLogin(ctx context.Context, login string) (*entity.User, 
 	return &su, nil
 }
 
-func (s *Storage) AddLoginPass(ctx context.Context, owner string, data *backend.DataLoginPass) (int32, error) {
+func (s *Storage) AddLoginPass(ctx context.Context, owner string, data *entity.DataLoginPass) (int32, error) {
 	q := `INSERT INTO login_pass (owner, title, encrypted_login, encrypted_password) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	var id int32
@@ -79,7 +79,7 @@ func (s *Storage) AddLoginPass(ctx context.Context, owner string, data *backend.
 	return id, nil
 }
 
-func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]backend.DataLoginPass, error) {
+func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]entity.DataLoginPass, error) {
 	q := `SELECT id, title FROM login_pass WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
@@ -91,9 +91,9 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]backend.Da
 		return nil, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	data := make([]backend.DataLoginPass, 0)
+	data := make([]entity.DataLoginPass, 0)
 	for rows.Next() {
-		d := backend.DataLoginPass{}
+		d := entity.DataLoginPass{}
 		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -108,10 +108,10 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]backend.Da
 	return data, nil
 }
 
-func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*backend.DataLoginPass, error) {
+func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*entity.DataLoginPass, error) {
 	q := `SELECT id, title, encrypted_login, encrypted_password FROM login_pass WHERE id = $1 AND owner = $2`
 
-	data := backend.DataLoginPass{}
+	data := entity.DataLoginPass{}
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Login, &data.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {

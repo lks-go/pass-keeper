@@ -19,9 +19,9 @@ type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
 
-	AddDataLoginPass(ctx context.Context, ownerLogin string, data *backend.DataLoginPass) (int32, error)
-	DataLoginPassList(ctx context.Context, ownerLogin string) ([]backend.DataLoginPass, error)
-	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*backend.DataLoginPass, error)
+	AddDataLoginPass(ctx context.Context, ownerLogin string, data *entity.DataLoginPass) (int32, error)
+	DataLoginPassList(ctx context.Context, ownerLogin string) ([]entity.DataLoginPass, error)
+	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*entity.DataLoginPass, error)
 
 	AddDataText(ctx context.Context, ownerLogin string, data *backend.DataText) (int32, error)
 	DataTextList(ctx context.Context, ownerLogin string) ([]backend.DataText, error)
@@ -85,7 +85,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	data := backend.DataLoginPass{
+	data := entity.DataLoginPass{
 		Title:    request.Title,
 		Login:    request.Login,
 		Password: request.Pass,

@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrAlreadyExists         = errors.New("already exists")
+	ErrMissingToken          = errors.New("missing auth token")
 	ErrInvalidToken          = errors.New("invalid token")
 	ErrTokenExpired          = errors.New("token expired")
 	ErrUsersPasswordNotMatch = errors.New("users password not match")

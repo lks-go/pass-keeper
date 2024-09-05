@@ -50,7 +50,7 @@ type DataLoginPass struct {
 	Password string
 }
 
-func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data *DataLoginPass) (int32, error) {
+func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data *entity.DataLoginPass) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get user by login: %w", err)
@@ -74,7 +74,7 @@ func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data 
 	return id, nil
 }
 
-func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]DataLoginPass, error) {
+func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]entity.DataLoginPass, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by login: %w", err)
@@ -88,7 +88,7 @@ func (s *Service) DataLoginPassList(ctx context.Context, ownerLogin string) ([]D
 	return data, nil
 }
 
-func (s *Service) DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*DataLoginPass, error) {
+func (s *Service) DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*entity.DataLoginPass, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by login: %w", err)

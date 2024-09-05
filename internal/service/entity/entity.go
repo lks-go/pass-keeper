@@ -11,3 +11,10 @@ type User struct {
 	Password     string
 	PasswordHash string
 }
+
+type DataLoginPass struct {
+	ID       int32
+	Title    string
+	Login    string
+	Password string
+}

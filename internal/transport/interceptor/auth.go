@@ -3,7 +3,6 @@ package interceptor
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -41,7 +40,7 @@ func (a *Auth) CheckAccess(ctx context.Context, req any, info *grpc.UnaryServerI
 
 	authToken, ok := md[entity.AuthTokenHeader]
 	if !ok {
-		return nil, status.Error(codes.PermissionDenied, fmt.Sprintf("%s: %s", (codes.PermissionDenied).String(), "missing auth token"))
+		return nil, status.Error(codes.Unauthenticated, entity.ErrMissingToken.Error())
 	}
 
 	claims, err = a.token.ParseJWTToken(authToken[0])
