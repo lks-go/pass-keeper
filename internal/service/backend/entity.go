@@ -1,4 +1,4 @@
-package server
+package backend
 
 type User struct {
 	ID           string

@@ -2,18 +2,18 @@ package service
 
 import (
 	"github.com/lks-go/pass-keeper/internal/lib/token"
-	"github.com/lks-go/pass-keeper/internal/service/server"
+	"github.com/lks-go/pass-keeper/internal/service/backend"
 )
 
 type ServerDeps struct {
-	Storage      server.Storage
-	PasswordHash server.PasswordHash
+	Storage      backend.Storage
+	PasswordHash backend.PasswordHash
 	Token        *token.Token
-	Crypt        server.Crypt
+	Crypt        backend.Crypt
 }
 
-func NewServer(d ServerDeps) *server.Service {
-	return &server.Service{
+func NewBackend(d ServerDeps) *backend.Service {
+	return &backend.Service{
 		Storage:  d.Storage,
 		Password: d.PasswordHash,
 		Token:    d.Token,

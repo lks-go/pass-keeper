@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	"github.com/lks-go/pass-keeper/internal/service/backend"
 	"github.com/lks-go/pass-keeper/internal/service/entity"
-	"github.com/lks-go/pass-keeper/internal/service/server"
 	"github.com/lks-go/pass-keeper/pkg/grpc_api"
 )
 
@@ -19,17 +19,17 @@ type Service interface {
 	RegisterUser(ctx context.Context, login, password string) (string, error)
 	AuthUser(ctx context.Context, login string, password string) (string, error)
 
-	AddDataLoginPass(ctx context.Context, ownerLogin string, data *server.DataLoginPass) (int32, error)
-	DataLoginPassList(ctx context.Context, ownerLogin string) ([]server.DataLoginPass, error)
-	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*server.DataLoginPass, error)
+	AddDataLoginPass(ctx context.Context, ownerLogin string, data *backend.DataLoginPass) (int32, error)
+	DataLoginPassList(ctx context.Context, ownerLogin string) ([]backend.DataLoginPass, error)
+	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*backend.DataLoginPass, error)
 
-	AddDataText(ctx context.Context, ownerLogin string, data *server.DataText) (int32, error)
-	DataTextList(ctx context.Context, ownerLogin string) ([]server.DataText, error)
-	DataText(ctx context.Context, ownerLogin string, ID int32) (*server.DataText, error)
+	AddDataText(ctx context.Context, ownerLogin string, data *backend.DataText) (int32, error)
+	DataTextList(ctx context.Context, ownerLogin string) ([]backend.DataText, error)
+	DataText(ctx context.Context, ownerLogin string, ID int32) (*backend.DataText, error)
 
-	AddDataCard(ctx context.Context, ownerLogin string, data *server.DataCard) (int32, error)
-	DataCardList(ctx context.Context, ownerLogin string) ([]server.DataCard, error)
-	DataCard(ctx context.Context, ownerLogin string, ID int32) (*server.DataCard, error)
+	AddDataCard(ctx context.Context, ownerLogin string, data *backend.DataCard) (int32, error)
+	DataCardList(ctx context.Context, ownerLogin string) ([]backend.DataCard, error)
+	DataCard(ctx context.Context, ownerLogin string, ID int32) (*backend.DataCard, error)
 }
 
 func New(s Service) *Handler {
@@ -48,7 +48,7 @@ func (h *Handler) RegisterUser(ctx context.Context, request *grpc_api.RegisterUs
 	userId, err := h.service.RegisterUser(ctx, request.Login, request.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrAlreadyExists):
+		case errors.Is(err, backend.ErrAlreadyExists):
 			return nil, status.Error(codes.AlreadyExists, (codes.AlreadyExists).String())
 		default:
 			log.Error().Err(err)
@@ -65,9 +65,9 @@ func (h *Handler) AuthUser(ctx context.Context, request *grpc_api.AuthUserReques
 	jwtString, err := h.service.AuthUser(ctx, request.Login, request.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrUsersPasswordNotMatch):
+		case errors.Is(err, backend.ErrUsersPasswordNotMatch):
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-		case errors.Is(err, server.ErrUserNotFound):
+		case errors.Is(err, backend.ErrUserNotFound):
 			log.Warn().Str("login", request.Login).Msg("user not found")
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
@@ -85,7 +85,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	data := server.DataLoginPass{
+	data := backend.DataLoginPass{
 		Title:    request.Title,
 		Login:    request.Login,
 		Password: request.Pass,
@@ -93,7 +93,7 @@ func (h *Handler) AddDataLoginPass(ctx context.Context, request *grpc_api.AddDat
 	id, err := h.service.AddDataLoginPass(ctx, ownerLogin, &data)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrUserNotFound):
+		case errors.Is(err, backend.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
 		default:
@@ -114,10 +114,10 @@ func (h *Handler) GetDataLoginPassList(ctx context.Context, _ *grpc_api.GetDataL
 	data, err := h.service.DataLoginPassList(ctx, ownerLogin)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrUserNotFound):
+		case errors.Is(err, backend.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-		case errors.Is(err, server.ErrNoData):
+		case errors.Is(err, backend.ErrNoData):
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
 			log.Error().Err(err).Msg("failed to get login and pass list")
@@ -147,10 +147,10 @@ func (h *Handler) GetDataLoginPass(ctx context.Context, request *grpc_api.GetDat
 	data, err := h.service.DataLoginPass(ctx, ownerLogin, request.Id)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrUserNotFound):
+		case errors.Is(err, backend.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-		case errors.Is(err, server.ErrNoData):
+		case errors.Is(err, backend.ErrNoData):
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
 			log.Error().Err(err).Msg("failed to get login and pass list")
@@ -174,14 +174,14 @@ func (h *Handler) AddDataText(ctx context.Context, request *grpc_api.AddDataText
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	data := server.DataText{
+	data := backend.DataText{
 		Title: request.Title,
 		Text:  request.Text,
 	}
 	id, err := h.service.AddDataText(ctx, ownerLogin, &data)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrUserNotFound):
+		case errors.Is(err, backend.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
 		default:
@@ -203,10 +203,10 @@ func (h *Handler) GetDataTextList(ctx context.Context, _ *grpc_api.GetDataListRe
 	if err != nil {
 		if err != nil {
 			switch {
-			case errors.Is(err, server.ErrUserNotFound):
+			case errors.Is(err, backend.ErrUserNotFound):
 				log.Warn().Str("login", ownerLogin).Msg("user not found")
 				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-			case errors.Is(err, server.ErrNoData):
+			case errors.Is(err, backend.ErrNoData):
 				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 			default:
 				log.Error().Err(err).Msg("failed to get text list")
@@ -238,10 +238,10 @@ func (h *Handler) GetDataText(ctx context.Context, request *grpc_api.GetDataRequ
 	if err != nil {
 		if err != nil {
 			switch {
-			case errors.Is(err, server.ErrUserNotFound):
+			case errors.Is(err, backend.ErrUserNotFound):
 				log.Warn().Str("login", ownerLogin).Msg("user not found")
 				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-			case errors.Is(err, server.ErrNoData):
+			case errors.Is(err, backend.ErrNoData):
 				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 			default:
 				log.Error().Err(err).Msg("failed to get text")
@@ -265,7 +265,7 @@ func (h *Handler) AddDataCard(ctx context.Context, request *grpc_api.AddDataCard
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	data := server.DataCard{
+	data := backend.DataCard{
 		Title:   request.Title,
 		Number:  request.Number,
 		Owner:   request.Owner,
@@ -275,7 +275,7 @@ func (h *Handler) AddDataCard(ctx context.Context, request *grpc_api.AddDataCard
 	id, err := h.service.AddDataCard(ctx, ownerLogin, &data)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrUserNotFound):
+		case errors.Is(err, backend.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
 		default:
@@ -296,10 +296,10 @@ func (h *Handler) GetDataCardList(ctx context.Context, _ *grpc_api.GetDataListRe
 	data, err := h.service.DataCardList(ctx, ownerLogin)
 	if err != nil {
 		switch {
-		case errors.Is(err, server.ErrUserNotFound):
+		case errors.Is(err, backend.ErrUserNotFound):
 			log.Warn().Str("login", ownerLogin).Msg("user not found")
 			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-		case errors.Is(err, server.ErrNoData):
+		case errors.Is(err, backend.ErrNoData):
 			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 		default:
 			log.Error().Err(err).Msg("failed to get card list")
@@ -330,10 +330,10 @@ func (h *Handler) GetDataCard(ctx context.Context, request *grpc_api.GetDataRequ
 	if err != nil {
 		if err != nil {
 			switch {
-			case errors.Is(err, server.ErrUserNotFound):
+			case errors.Is(err, backend.ErrUserNotFound):
 				log.Warn().Str("login", ownerLogin).Msg("user not found")
 				return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
-			case errors.Is(err, server.ErrNoData):
+			case errors.Is(err, backend.ErrNoData):
 				return nil, status.Error(codes.NotFound, (codes.NotFound).String())
 			default:
 				log.Error().Err(err).Msg("failed to get card")

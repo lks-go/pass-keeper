@@ -77,7 +77,7 @@ func (app *App) Build() error {
 		Token:        token,
 		Crypt:        crypt,
 	}
-	service := service.NewServer(servDeps)
+	service := service.NewBackend(servDeps)
 
 	grpcHandler := grpchandler.New(service)
 

@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	"github.com/lks-go/pass-keeper/internal/service/server"
+	"github.com/lks-go/pass-keeper/internal/service/backend"
 )
 
 func New(db *sql.DB) *Storage {
@@ -35,7 +35,7 @@ func (s *Storage) RegisterUser(ctx context.Context, login string, passwordHash s
 	if err != nil {
 		if err, ok := err.(*pgconn.PgError); ok {
 			if err.Code == pgerrcode.UniqueViolation {
-				return "", server.ErrAlreadyExists
+				return "", backend.ErrAlreadyExists
 			}
 		}
 
@@ -45,19 +45,19 @@ func (s *Storage) RegisterUser(ctx context.Context, login string, passwordHash s
 	return id, nil
 }
 
-func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, error) {
+func (s *Storage) UserByLogin(ctx context.Context, login string) (*backend.User, error) {
 	q := `SELECT id, login, password_hash FROM users WHERE login = $1;`
 
 	u := user{}
 	if err := s.db.QueryRowContext(ctx, q, login).Scan(&u.ID, &u.Login, &u.PasswordHash); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrUserNotFound
+			return nil, backend.ErrUserNotFound
 		}
 
 		return nil, fmt.Errorf("query row error: %w", err)
 	}
 
-	su := server.User{
+	su := backend.User{
 		ID:           u.ID,
 		Login:        u.Login,
 		PasswordHash: u.PasswordHash,
@@ -66,7 +66,7 @@ func (s *Storage) UserByLogin(ctx context.Context, login string) (*server.User, 
 	return &su, nil
 }
 
-func (s *Storage) AddLoginPass(ctx context.Context, owner string, data *server.DataLoginPass) (int32, error) {
+func (s *Storage) AddLoginPass(ctx context.Context, owner string, data *backend.DataLoginPass) (int32, error) {
 	q := `INSERT INTO login_pass (owner, title, encrypted_login, encrypted_password) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	var id int32
@@ -78,21 +78,21 @@ func (s *Storage) AddLoginPass(ctx context.Context, owner string, data *server.D
 	return id, nil
 }
 
-func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.DataLoginPass, error) {
+func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]backend.DataLoginPass, error) {
 	q := `SELECT id, title FROM login_pass WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrNoData
+			return nil, backend.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	data := make([]server.DataLoginPass, 0)
+	data := make([]backend.DataLoginPass, 0)
 	for rows.Next() {
-		d := server.DataLoginPass{}
+		d := backend.DataLoginPass{}
 		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -107,14 +107,14 @@ func (s *Storage) LoginPassList(ctx context.Context, owner string) ([]server.Dat
 	return data, nil
 }
 
-func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*server.DataLoginPass, error) {
+func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*backend.DataLoginPass, error) {
 	q := `SELECT id, title, encrypted_login, encrypted_password FROM login_pass WHERE id = $1 AND owner = $2`
 
-	data := server.DataLoginPass{}
+	data := backend.DataLoginPass{}
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Login, &data.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrNoData
+			return nil, backend.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
@@ -123,7 +123,7 @@ func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*s
 	return &data, nil
 }
 
-func (s *Storage) AddText(ctx context.Context, owner string, data *server.DataText) (int32, error) {
+func (s *Storage) AddText(ctx context.Context, owner string, data *backend.DataText) (int32, error) {
 	q := `INSERT INTO text (owner, title, encrypted_text) VALUES ($1, $2, $3) RETURNING id`
 
 	var id int32
@@ -135,21 +135,21 @@ func (s *Storage) AddText(ctx context.Context, owner string, data *server.DataTe
 	return id, nil
 }
 
-func (s *Storage) TextList(ctx context.Context, owner string) ([]server.DataText, error) {
+func (s *Storage) TextList(ctx context.Context, owner string) ([]backend.DataText, error) {
 	q := `SELECT id, title FROM text WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrNoData
+			return nil, backend.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	data := make([]server.DataText, 0)
+	data := make([]backend.DataText, 0)
 	for rows.Next() {
-		d := server.DataText{}
+		d := backend.DataText{}
 		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -164,14 +164,14 @@ func (s *Storage) TextList(ctx context.Context, owner string) ([]server.DataText
 	return data, nil
 }
 
-func (s *Storage) TextByID(ctx context.Context, owner string, ID int32) (*server.DataText, error) {
+func (s *Storage) TextByID(ctx context.Context, owner string, ID int32) (*backend.DataText, error) {
 	q := `SELECT id, title, encrypted_text FROM text WHERE id = $1 AND owner = $2`
 
-	data := server.DataText{}
+	data := backend.DataText{}
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Text)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrNoData
+			return nil, backend.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
@@ -180,7 +180,7 @@ func (s *Storage) TextByID(ctx context.Context, owner string, ID int32) (*server
 	return &data, nil
 }
 
-func (s *Storage) AddCard(ctx context.Context, owner string, data *server.DataCard) (int32, error) {
+func (s *Storage) AddCard(ctx context.Context, owner string, data *backend.DataCard) (int32, error) {
 	q := `INSERT INTO card (owner, title, encrypted_number, encrypted_owner, encrypted_exp_date, encrypted_cvc_code)
 			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
@@ -193,21 +193,21 @@ func (s *Storage) AddCard(ctx context.Context, owner string, data *server.DataCa
 	return id, nil
 }
 
-func (s *Storage) CardList(ctx context.Context, owner string) ([]server.DataCard, error) {
+func (s *Storage) CardList(ctx context.Context, owner string) ([]backend.DataCard, error) {
 	q := `SELECT id, title FROM card WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrNoData
+			return nil, backend.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	data := make([]server.DataCard, 0)
+	data := make([]backend.DataCard, 0)
 	for rows.Next() {
-		d := server.DataCard{}
+		d := backend.DataCard{}
 		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -222,14 +222,14 @@ func (s *Storage) CardList(ctx context.Context, owner string) ([]server.DataCard
 	return data, nil
 }
 
-func (s *Storage) CardByID(ctx context.Context, owner string, ID int32) (*server.DataCard, error) {
+func (s *Storage) CardByID(ctx context.Context, owner string, ID int32) (*backend.DataCard, error) {
 	q := `SELECT id, title, encrypted_number, encrypted_owner, encrypted_exp_date, encrypted_cvc_code FROM card WHERE id = $1 AND owner = $2`
 
-	data := server.DataCard{}
+	data := backend.DataCard{}
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Number, &data.Owner, &data.ExpDate, &data.CVCCode)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, server.ErrNoData
+			return nil, backend.ErrNoData
 		}
 
 		return nil, fmt.Errorf("failed to exec query: %w", err)
