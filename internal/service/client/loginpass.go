@@ -11,11 +11,16 @@ import (
 )
 
 type LoginPassClient interface {
-	ListLoginPass(ctx context.Context) ([]entity.DataLoginPass, error)
+	ListLoginPass(ctx context.Context, token string) ([]entity.DataLoginPass, error)
 }
 
 type LoginPass struct {
 	client LoginPassClient
+	token  string
+}
+
+func (lp *LoginPass) SetToenk(t string) {
+	lp.token = t
 }
 
 func (lp *LoginPass) Run(ctx context.Context) error {
@@ -54,7 +59,7 @@ func (lp *LoginPass) add(ctx context.Context) error {
 }
 
 func (lp *LoginPass) list(ctx context.Context) error {
-	list, err := lp.client.ListLoginPass(ctx)
+	list, err := lp.client.ListLoginPass(ctx, lp.token)
 	if err != nil {
 		return fmt.Errorf("failed to get list of logins and passwords: %w", err)
 	}

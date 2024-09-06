@@ -1,9 +1,12 @@
 package client
 
 const (
-	OptLoginPass  = "Login/Pass"
+	OptRegister = "Register"
+	OptLogIn    = "Log in"
+
+	OptLoginPass  = "Logins and passwords"
 	OptTextData   = "Text data"
-	OptCards      = "Cards"
+	OptCards      = "Bank cards"
 	OptBinaryData = "Binary data"
 
 	OptExit = "Exit"

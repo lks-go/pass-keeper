@@ -35,10 +35,7 @@ func (app *App) Build() error {
 		return fmt.Errorf("failed to get backend client: %w", err)
 	}
 
-	clientDeps := client.Deps{
-		LoginPassClient: backendClient,
-	}
-	app.client = client.New(clientDeps)
+	app.client = client.New(backendClient)
 
 	return nil
 }

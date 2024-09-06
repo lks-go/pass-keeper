@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/lks-go/pass-keeper/internal/service/entity"
@@ -45,8 +45,9 @@ type BackendClient struct {
 	client grpc_api.PassKeeperClient
 }
 
-func (c *BackendClient) ListLoginPass(ctx context.Context) ([]entity.DataLoginPass, error) {
-	log.Info().Msg("Getting request to backend")
+func (c *BackendClient) ListLoginPass(ctx context.Context, token string) ([]entity.DataLoginPass, error) {
+	md := metadata.Pairs("auth_token", token)
+	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.GetDataLoginPassList(ctx, &grpc_api.GetDataListRequest{})
 	if err != nil {
@@ -71,4 +72,30 @@ func (c *BackendClient) ListLoginPass(ctx context.Context) ([]entity.DataLoginPa
 	}
 
 	return list, nil
+}
+
+func (c *BackendClient) Reg(ctx context.Context, login string, password string) error {
+	req := grpc_api.RegisterUserRequest{
+		Login:    login,
+		Password: password,
+	}
+	_, err := c.client.RegisterUser(ctx, &req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+
+	return nil
+}
+
+func (c *BackendClient) Auth(ctx context.Context, login string, password string) (token string, err error) {
+	req := grpc_api.AuthUserRequest{
+		Login:    login,
+		Password: password,
+	}
+	resp, err := c.client.AuthUser(ctx, &req)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+
+	return resp.Token, nil
 }
