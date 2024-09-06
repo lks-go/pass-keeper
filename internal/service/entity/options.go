@@ -1,4 +1,4 @@
-package client
+package entity
 
 const (
 	OptRegister = "Register"
@@ -12,6 +12,5 @@ const (
 	OptExit = "Exit"
 	OptAdd  = "Add"
 	OptList = "List"
-	OptGet  = "Get decrypted"
 	OptBack = "Back"
 )

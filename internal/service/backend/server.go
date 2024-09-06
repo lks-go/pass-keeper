@@ -43,13 +43,6 @@ func (s *Service) AuthUser(ctx context.Context, login string, password string) (
 	return token, nil
 }
 
-type DataLoginPass struct {
-	ID       int32
-	Title    string
-	Login    string
-	Password string
-}
-
 func (s *Service) AddDataLoginPass(ctx context.Context, ownerLogin string, data *entity.DataLoginPass) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
@@ -112,13 +105,7 @@ func (s *Service) DataLoginPass(ctx context.Context, ownerLogin string, ID int32
 	return data, nil
 }
 
-type DataText struct {
-	ID    int32
-	Title string
-	Text  string
-}
-
-func (s *Service) AddDataText(ctx context.Context, ownerLogin string, data *DataText) (int32, error) {
+func (s *Service) AddDataText(ctx context.Context, ownerLogin string, data *entity.DataText) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get user by login: %w", err)
@@ -137,7 +124,7 @@ func (s *Service) AddDataText(ctx context.Context, ownerLogin string, data *Data
 	return id, nil
 }
 
-func (s *Service) DataTextList(ctx context.Context, ownerLogin string) ([]DataText, error) {
+func (s *Service) DataTextList(ctx context.Context, ownerLogin string) ([]entity.DataText, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by login: %w", err)
@@ -151,7 +138,7 @@ func (s *Service) DataTextList(ctx context.Context, ownerLogin string) ([]DataTe
 	return data, nil
 }
 
-func (s *Service) DataText(ctx context.Context, ownerLogin string, ID int32) (*DataText, error) {
+func (s *Service) DataText(ctx context.Context, ownerLogin string, ID int32) (*entity.DataText, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by login: %w", err)
@@ -170,16 +157,7 @@ func (s *Service) DataText(ctx context.Context, ownerLogin string, ID int32) (*D
 	return data, nil
 }
 
-type DataCard struct {
-	ID      int32
-	Title   string
-	Number  string
-	Owner   string
-	ExpDate string
-	CVCCode string
-}
-
-func (s *Service) AddDataCard(ctx context.Context, ownerLogin string, data *DataCard) (int32, error) {
+func (s *Service) AddDataCard(ctx context.Context, ownerLogin string, data *entity.DataCard) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get user by login: %w", err)
@@ -197,7 +175,7 @@ func (s *Service) AddDataCard(ctx context.Context, ownerLogin string, data *Data
 	return id, nil
 }
 
-func (s *Service) DataCardList(ctx context.Context, ownerLogin string) ([]DataCard, error) {
+func (s *Service) DataCardList(ctx context.Context, ownerLogin string) ([]entity.DataCard, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by login: %w", err)
@@ -211,7 +189,7 @@ func (s *Service) DataCardList(ctx context.Context, ownerLogin string) ([]DataCa
 	return data, nil
 }
 
-func (s *Service) DataCard(ctx context.Context, ownerLogin string, ID int32) (*DataCard, error) {
+func (s *Service) DataCard(ctx context.Context, ownerLogin string, ID int32) (*entity.DataCard, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by login: %w", err)
@@ -229,7 +207,7 @@ func (s *Service) DataCard(ctx context.Context, ownerLogin string, ID int32) (*D
 	return data, nil
 }
 
-func (s *Service) encryptCardData(data *DataCard) error {
+func (s *Service) encryptCardData(data *entity.DataCard) error {
 	var err error
 
 	data.Number, err = s.Crypt.Encrypt(data.Number)
@@ -255,7 +233,7 @@ func (s *Service) encryptCardData(data *DataCard) error {
 	return nil
 }
 
-func (s *Service) decryptCardData(data *DataCard) error {
+func (s *Service) decryptCardData(data *entity.DataCard) error {
 	var err error
 
 	data.Number, err = s.Crypt.Decrypt(data.Number)

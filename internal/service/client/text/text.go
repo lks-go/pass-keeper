@@ -1,4 +1,4 @@
-package client
+package text
 
 import (
 	"context"
@@ -9,15 +9,15 @@ import (
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
-type TextClient interface {
+type Storage interface {
 	TextAdd(ctx context.Context, token string, title, text string) (id int32, err error)
 	ListText(ctx context.Context, token string) ([]entity.DataText, error)
 	TextData(ctx context.Context, token string, id int32) (*entity.DataText, error)
 }
 
 type Text struct {
-	client TextClient
-	token  string
+	Storage Storage
+	token   string
 }
 
 func (lp *Text) SetToken(t string) {
@@ -27,7 +27,7 @@ func (lp *Text) SetToken(t string) {
 func (lp *Text) Run(ctx context.Context) error {
 	prompt := promptui.Select{
 		Label: "Chose action",
-		Items: []string{OptAdd, OptList, OptBack},
+		Items: []string{entity.OptAdd, entity.OptList, entity.OptBack},
 	}
 
 	_, result, err := prompt.Run()
@@ -36,15 +36,15 @@ func (lp *Text) Run(ctx context.Context) error {
 	}
 
 	switch result {
-	case OptAdd:
+	case entity.OptAdd:
 		if err := lp.add(ctx); err != nil {
 			return fmt.Errorf("failed to add data: %w", err)
 		}
-	case OptList:
+	case entity.OptList:
 		if err := lp.list(ctx); err != nil {
 			return fmt.Errorf("failed to list data: %w", err)
 		}
-	case OptBack:
+	case entity.OptBack:
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func (lp *Text) add(ctx context.Context) error {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 
-	id, err := lp.client.TextAdd(ctx, lp.token, title, text)
+	id, err := lp.Storage.TextAdd(ctx, lp.token, title, text)
 	if err != nil {
 		return fmt.Errorf("failed to add login and pass: %w", err)
 	}
@@ -80,7 +80,7 @@ func (lp *Text) add(ctx context.Context) error {
 }
 
 func (lp *Text) list(ctx context.Context) error {
-	list, err := lp.client.ListText(ctx, lp.token)
+	list, err := lp.Storage.ListText(ctx, lp.token)
 	if err != nil {
 		return fmt.Errorf("failed to get list of logins and passwords: %w", err)
 	}
@@ -90,7 +90,7 @@ func (lp *Text) list(ctx context.Context) error {
 		itmes = append(itmes, item.Title)
 	}
 
-	itmes = append(itmes, OptBack)
+	itmes = append(itmes, entity.OptBack)
 
 	prompt := promptui.Select{
 		Label: "Choose creds",
@@ -102,7 +102,7 @@ func (lp *Text) list(ctx context.Context) error {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 
-	if result == OptBack {
+	if result == entity.OptBack {
 		return nil
 	}
 
@@ -115,7 +115,7 @@ func (lp *Text) list(ctx context.Context) error {
 
 func (lp *Text) get(ctx context.Context, id int32) error {
 
-	data, err := lp.client.TextData(ctx, lp.token, id)
+	data, err := lp.Storage.TextData(ctx, lp.token, id)
 	if err != nil {
 		return fmt.Errorf("failed to get login and pass: %w", err)
 	}

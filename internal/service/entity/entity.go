@@ -24,3 +24,12 @@ type DataText struct {
 	Title string
 	Text  string
 }
+
+type DataCard struct {
+	ID      int32
+	Title   string
+	Number  string
+	Owner   string
+	ExpDate string
+	CVCCode string
+}

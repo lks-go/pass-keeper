@@ -14,13 +14,13 @@ type Storage interface {
 	LoginPassList(ctx context.Context, owner string) ([]entity.DataLoginPass, error)
 	LoginPassByID(ctx context.Context, owner string, ID int32) (*entity.DataLoginPass, error)
 
-	AddText(ctx context.Context, owner string, data *DataText) (int32, error)
-	TextList(ctx context.Context, owner string) ([]DataText, error)
-	TextByID(ctx context.Context, owner string, ID int32) (*DataText, error)
+	AddText(ctx context.Context, owner string, data *entity.DataText) (int32, error)
+	TextList(ctx context.Context, owner string) ([]entity.DataText, error)
+	TextByID(ctx context.Context, owner string, ID int32) (*entity.DataText, error)
 
-	AddCard(ctx context.Context, owner string, data *DataCard) (int32, error)
-	CardList(ctx context.Context, owner string) ([]DataCard, error)
-	CardByID(ctx context.Context, owner string, ID int32) (*DataCard, error)
+	AddCard(ctx context.Context, owner string, data *entity.DataCard) (int32, error)
+	CardList(ctx context.Context, owner string) ([]entity.DataCard, error)
+	CardByID(ctx context.Context, owner string, ID int32) (*entity.DataCard, error)
 }
 
 type UserLogin interface {

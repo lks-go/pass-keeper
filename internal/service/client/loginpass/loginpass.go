@@ -1,4 +1,4 @@
-package client
+package loginpass
 
 import (
 	"context"
@@ -9,15 +9,15 @@ import (
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
-type LoginPassClient interface {
+type Storage interface {
 	ListLoginPass(ctx context.Context, token string) ([]entity.DataLoginPass, error)
 	LoginPassData(ctx context.Context, token string, id int32) (*entity.DataLoginPass, error)
 	LoginPassAdd(ctx context.Context, token string, title, login, pass string) (id int32, err error)
 }
 
 type LoginPass struct {
-	client LoginPassClient
-	token  string
+	Storage Storage
+	token   string
 }
 
 func (lp *LoginPass) SetToken(t string) {
@@ -27,7 +27,7 @@ func (lp *LoginPass) SetToken(t string) {
 func (lp *LoginPass) Run(ctx context.Context) error {
 	prompt := promptui.Select{
 		Label: "Choose action",
-		Items: []string{OptAdd, OptList, OptBack},
+		Items: []string{entity.OptAdd, entity.OptList, entity.OptBack},
 	}
 
 	_, result, err := prompt.Run()
@@ -36,15 +36,15 @@ func (lp *LoginPass) Run(ctx context.Context) error {
 	}
 
 	switch result {
-	case OptAdd:
+	case entity.OptAdd:
 		if err := lp.add(ctx); err != nil {
 			return fmt.Errorf("failed to add data: %w", err)
 		}
-	case OptList:
+	case entity.OptList:
 		if err := lp.list(ctx); err != nil {
 			return fmt.Errorf("failed to list data: %w", err)
 		}
-	case OptBack:
+	case entity.OptBack:
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func (lp *LoginPass) add(ctx context.Context) error {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 
-	id, err := lp.client.LoginPassAdd(ctx, lp.token, title, login, pass)
+	id, err := lp.Storage.LoginPassAdd(ctx, lp.token, title, login, pass)
 	if err != nil {
 		return fmt.Errorf("failed to add login and pass: %w", err)
 	}
@@ -89,7 +89,7 @@ func (lp *LoginPass) add(ctx context.Context) error {
 }
 
 func (lp *LoginPass) list(ctx context.Context) error {
-	list, err := lp.client.ListLoginPass(ctx, lp.token)
+	list, err := lp.Storage.ListLoginPass(ctx, lp.token)
 	if err != nil {
 		return fmt.Errorf("failed to get list of logins and passwords: %w", err)
 	}
@@ -99,7 +99,7 @@ func (lp *LoginPass) list(ctx context.Context) error {
 		itmes = append(itmes, item.Title)
 	}
 
-	itmes = append(itmes, OptBack)
+	itmes = append(itmes, entity.OptBack)
 
 	prompt := promptui.Select{
 		Label: "Choose creds",
@@ -111,7 +111,7 @@ func (lp *LoginPass) list(ctx context.Context) error {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 
-	if result == OptBack {
+	if result == entity.OptBack {
 		return nil
 	}
 
@@ -124,7 +124,7 @@ func (lp *LoginPass) list(ctx context.Context) error {
 
 func (lp *LoginPass) get(ctx context.Context, id int32) error {
 
-	data, err := lp.client.LoginPassData(ctx, lp.token, id)
+	data, err := lp.Storage.LoginPassData(ctx, lp.token, id)
 	if err != nil {
 		return fmt.Errorf("failed to get login and pass: %w", err)
 	}

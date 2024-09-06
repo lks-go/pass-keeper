@@ -1,4 +1,4 @@
-package client
+package auth
 
 import (
 	"context"
@@ -7,13 +7,13 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-type AuthClient interface {
+type Storage interface {
 	Auth(ctx context.Context, login string, password string) (token string, err error)
 	Reg(ctx context.Context, login string, password string) error
 }
 
 type Auth struct {
-	client AuthClient
+	Storage Storage
 }
 
 func (lp *Auth) Auth(ctx context.Context) (string, error) {
@@ -35,7 +35,7 @@ func (lp *Auth) Auth(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("prompt failed: %w", err)
 	}
 
-	token, err := lp.client.Auth(ctx, login, pass)
+	token, err := lp.Storage.Auth(ctx, login, pass)
 	if err != nil {
 		return "", fmt.Errorf("failed to auth: %w", err)
 	}
@@ -62,7 +62,7 @@ func (lp *Auth) Reg(ctx context.Context) error {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 
-	if err := lp.client.Reg(ctx, login, pass); err != nil {
+	if err := lp.Storage.Reg(ctx, login, pass); err != nil {
 		return fmt.Errorf("failed to auth: %w", err)
 	}
 

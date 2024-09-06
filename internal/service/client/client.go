@@ -6,26 +6,35 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/rs/zerolog/log"
+
+	"github.com/lks-go/pass-keeper/internal/service/client/auth"
+	"github.com/lks-go/pass-keeper/internal/service/client/card"
+	"github.com/lks-go/pass-keeper/internal/service/client/loginpass"
+	"github.com/lks-go/pass-keeper/internal/service/client/text"
+	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
-type BackendClient interface {
-	LoginPassClient
-	AuthClient
-	TextClient
+type storage interface {
+	loginpass.Storage
+	auth.Storage
+	text.Storage
+	card.Storage
 }
 
-func New(back BackendClient) *Client {
+func New(s storage) *Client {
 	return &Client{
-		auth:      &Auth{client: back},
-		loginPass: &LoginPass{client: back},
-		text:      &Text{client: back},
+		auth:      &auth.Auth{Storage: s},
+		loginPass: &loginpass.LoginPass{Storage: s},
+		text:      &text.Text{Storage: s},
+		card:      &card.Card{Storage: s},
 	}
 }
 
 type Client struct {
-	auth      *Auth
-	loginPass *LoginPass
-	text      *Text
+	auth      *auth.Auth
+	loginPass *loginpass.LoginPass
+	text      *text.Text
+	card      *card.Card
 
 	authenticated bool
 }
@@ -33,6 +42,7 @@ type Client struct {
 func (c *Client) SetToken(t string) {
 	c.loginPass.SetToken(t)
 	c.text.SetToken(t)
+	c.card.SetToken(t)
 }
 
 func (c *Client) Run(ctx context.Context) error {
@@ -42,7 +52,7 @@ LOOP:
 		if !c.authenticated {
 			authPrompt := promptui.Select{
 				Label: "Please log in or register",
-				Items: []string{OptLogIn, OptRegister, OptExit},
+				Items: []string{entity.OptLogIn, entity.OptRegister, entity.OptExit},
 			}
 
 			_, authResult, err := authPrompt.Run()
@@ -51,7 +61,7 @@ LOOP:
 			}
 
 			switch authResult {
-			case OptLogIn:
+			case entity.OptLogIn:
 				token, err := c.auth.Auth(ctx)
 				if err != nil {
 					log.Err(err).Msg("login pass failed")
@@ -60,7 +70,7 @@ LOOP:
 
 				c.SetToken(token)
 				c.authenticated = true
-			case OptRegister:
+			case entity.OptRegister:
 				err := c.auth.Reg(ctx)
 				if err != nil {
 					log.Err(err).Msg("registration failed")
@@ -68,7 +78,7 @@ LOOP:
 				}
 
 				log.Info().Msg("You successfully registered, use your login and password to authenticate yourself")
-			case OptExit:
+			case entity.OptExit:
 				fmt.Println("exit")
 				break LOOP
 			}
@@ -78,7 +88,7 @@ LOOP:
 
 		prompt := promptui.Select{
 			Label: "Select category:",
-			Items: []string{OptLoginPass, OptTextData, OptCards, OptBinaryData, OptExit},
+			Items: []string{entity.OptLoginPass, entity.OptTextData, entity.OptCards, entity.OptBinaryData, entity.OptExit},
 		}
 
 		_, result, err := prompt.Run()
@@ -87,15 +97,19 @@ LOOP:
 		}
 
 		switch result {
-		case OptLoginPass:
+		case entity.OptLoginPass:
 			if err := c.loginPass.Run(ctx); err != nil {
 				log.Err(err).Msg("login pass failed")
 			}
-		case OptTextData:
+		case entity.OptTextData:
 			if err := c.text.Run(ctx); err != nil {
 				log.Err(err).Msg("text failed")
 			}
-		case OptExit:
+		case entity.OptCards:
+			if err := c.card.Run(ctx); err != nil {
+				log.Err(err).Msg("text failed")
+			}
+		case entity.OptExit:
 			fmt.Println("exit")
 			break LOOP
 		}

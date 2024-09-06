@@ -189,3 +189,72 @@ func (c *BackendClient) TextData(ctx context.Context, token string, id int32) (*
 
 	return &data, nil
 }
+
+func (c *BackendClient) ListCard(ctx context.Context, token string) ([]entity.DataCard, error) {
+	md := metadata.Pairs("auth_token", token)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := c.client.GetDataCardList(ctx, &grpc_api.GetDataListRequest{})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			switch st.Message() {
+			case entity.ErrMissingToken.Error():
+				return nil, entity.ErrMissingToken
+			default:
+				return nil, fmt.Errorf("request failed: %w", err)
+			}
+		}
+
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	list := make([]entity.DataCard, 0, len(resp.List))
+	for _, data := range resp.List {
+		list = append(list, entity.DataCard{
+			ID:    data.Id,
+			Title: data.Title,
+		})
+	}
+
+	return list, nil
+}
+
+func (c *BackendClient) CardData(ctx context.Context, token string, id int32) (*entity.DataCard, error) {
+	md := metadata.Pairs("auth_token", token)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := c.client.GetDataCard(ctx, &grpc_api.GetDataRequest{Id: id})
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	data := entity.DataCard{
+		ID:      resp.Id,
+		Title:   resp.Title,
+		Number:  resp.Number,
+		Owner:   resp.Owner,
+		ExpDate: resp.ExpDate,
+		CVCCode: resp.CvcCode,
+	}
+
+	return &data, nil
+}
+
+func (c *BackendClient) CardAdd(ctx context.Context, token string, card *entity.DataCard) (id int32, err error) {
+	md := metadata.Pairs("auth_token", token)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	req := grpc_api.AddDataCardRequest{
+		Title:   card.Title,
+		Number:  card.Number,
+		Owner:   card.Owner,
+		ExpDate: card.ExpDate,
+		CvcCode: card.CVCCode,
+	}
+	resp, err := c.client.AddDataCard(ctx, &req)
+	if err != nil {
+		return 0, fmt.Errorf("request failed: %w", err)
+	}
+
+	return resp.Id, nil
+}

@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	"github.com/lks-go/pass-keeper/internal/service/backend"
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
@@ -124,7 +123,7 @@ func (s *Storage) LoginPassByID(ctx context.Context, owner string, ID int32) (*e
 	return &data, nil
 }
 
-func (s *Storage) AddText(ctx context.Context, owner string, data *backend.DataText) (int32, error) {
+func (s *Storage) AddText(ctx context.Context, owner string, data *entity.DataText) (int32, error) {
 	q := `INSERT INTO text (owner, title, encrypted_text) VALUES ($1, $2, $3) RETURNING id`
 
 	var id int32
@@ -136,7 +135,7 @@ func (s *Storage) AddText(ctx context.Context, owner string, data *backend.DataT
 	return id, nil
 }
 
-func (s *Storage) TextList(ctx context.Context, owner string) ([]backend.DataText, error) {
+func (s *Storage) TextList(ctx context.Context, owner string) ([]entity.DataText, error) {
 	q := `SELECT id, title FROM text WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
@@ -148,9 +147,9 @@ func (s *Storage) TextList(ctx context.Context, owner string) ([]backend.DataTex
 		return nil, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	data := make([]backend.DataText, 0)
+	data := make([]entity.DataText, 0)
 	for rows.Next() {
-		d := backend.DataText{}
+		d := entity.DataText{}
 		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -165,10 +164,10 @@ func (s *Storage) TextList(ctx context.Context, owner string) ([]backend.DataTex
 	return data, nil
 }
 
-func (s *Storage) TextByID(ctx context.Context, owner string, ID int32) (*backend.DataText, error) {
+func (s *Storage) TextByID(ctx context.Context, owner string, ID int32) (*entity.DataText, error) {
 	q := `SELECT id, title, encrypted_text FROM text WHERE id = $1 AND owner = $2`
 
-	data := backend.DataText{}
+	data := entity.DataText{}
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Text)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -181,7 +180,7 @@ func (s *Storage) TextByID(ctx context.Context, owner string, ID int32) (*backen
 	return &data, nil
 }
 
-func (s *Storage) AddCard(ctx context.Context, owner string, data *backend.DataCard) (int32, error) {
+func (s *Storage) AddCard(ctx context.Context, owner string, data *entity.DataCard) (int32, error) {
 	q := `INSERT INTO card (owner, title, encrypted_number, encrypted_owner, encrypted_exp_date, encrypted_cvc_code)
 			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
@@ -194,7 +193,7 @@ func (s *Storage) AddCard(ctx context.Context, owner string, data *backend.DataC
 	return id, nil
 }
 
-func (s *Storage) CardList(ctx context.Context, owner string) ([]backend.DataCard, error) {
+func (s *Storage) CardList(ctx context.Context, owner string) ([]entity.DataCard, error) {
 	q := `SELECT id, title FROM card WHERE owner = $1`
 
 	rows, err := s.db.QueryContext(ctx, q, owner)
@@ -206,9 +205,9 @@ func (s *Storage) CardList(ctx context.Context, owner string) ([]backend.DataCar
 		return nil, fmt.Errorf("failed to exec query: %w", err)
 	}
 
-	data := make([]backend.DataCard, 0)
+	data := make([]entity.DataCard, 0)
 	for rows.Next() {
-		d := backend.DataCard{}
+		d := entity.DataCard{}
 		if err := rows.Scan(&d.ID, &d.Title); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -223,10 +222,10 @@ func (s *Storage) CardList(ctx context.Context, owner string) ([]backend.DataCar
 	return data, nil
 }
 
-func (s *Storage) CardByID(ctx context.Context, owner string, ID int32) (*backend.DataCard, error) {
+func (s *Storage) CardByID(ctx context.Context, owner string, ID int32) (*entity.DataCard, error) {
 	q := `SELECT id, title, encrypted_number, encrypted_owner, encrypted_exp_date, encrypted_cvc_code FROM card WHERE id = $1 AND owner = $2`
 
-	data := backend.DataCard{}
+	data := entity.DataCard{}
 	err := s.db.QueryRowContext(ctx, q, ID, owner).Scan(&data.ID, &data.Title, &data.Number, &data.Owner, &data.ExpDate, &data.CVCCode)
 	if err != nil {
 		if err == sql.ErrNoRows {

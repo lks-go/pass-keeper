@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/lks-go/pass-keeper/internal/service/backend"
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 	"github.com/lks-go/pass-keeper/pkg/grpc_api"
 )
@@ -23,13 +22,13 @@ type Service interface {
 	DataLoginPassList(ctx context.Context, ownerLogin string) ([]entity.DataLoginPass, error)
 	DataLoginPass(ctx context.Context, ownerLogin string, ID int32) (*entity.DataLoginPass, error)
 
-	AddDataText(ctx context.Context, ownerLogin string, data *backend.DataText) (int32, error)
-	DataTextList(ctx context.Context, ownerLogin string) ([]backend.DataText, error)
-	DataText(ctx context.Context, ownerLogin string, ID int32) (*backend.DataText, error)
+	AddDataText(ctx context.Context, ownerLogin string, data *entity.DataText) (int32, error)
+	DataTextList(ctx context.Context, ownerLogin string) ([]entity.DataText, error)
+	DataText(ctx context.Context, ownerLogin string, ID int32) (*entity.DataText, error)
 
-	AddDataCard(ctx context.Context, ownerLogin string, data *backend.DataCard) (int32, error)
-	DataCardList(ctx context.Context, ownerLogin string) ([]backend.DataCard, error)
-	DataCard(ctx context.Context, ownerLogin string, ID int32) (*backend.DataCard, error)
+	AddDataCard(ctx context.Context, ownerLogin string, data *entity.DataCard) (int32, error)
+	DataCardList(ctx context.Context, ownerLogin string) ([]entity.DataCard, error)
+	DataCard(ctx context.Context, ownerLogin string, ID int32) (*entity.DataCard, error)
 }
 
 func New(s Service) *Handler {
@@ -174,7 +173,7 @@ func (h *Handler) AddDataText(ctx context.Context, request *grpc_api.AddDataText
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	data := backend.DataText{
+	data := entity.DataText{
 		Title: request.Title,
 		Text:  request.Text,
 	}
@@ -265,7 +264,7 @@ func (h *Handler) AddDataCard(ctx context.Context, request *grpc_api.AddDataCard
 		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
 	}
 
-	data := backend.DataCard{
+	data := entity.DataCard{
 		Title:   request.Title,
 		Number:  request.Number,
 		Owner:   request.Owner,
