@@ -11,24 +11,28 @@ import (
 type BackendClient interface {
 	LoginPassClient
 	AuthClient
+	TextClient
 }
 
 func New(back BackendClient) *Client {
 	return &Client{
-		loginPass: &LoginPass{client: back},
 		auth:      &Auth{client: back},
+		loginPass: &LoginPass{client: back},
+		text:      &Text{client: back},
 	}
 }
 
 type Client struct {
-	loginPass *LoginPass
 	auth      *Auth
+	loginPass *LoginPass
+	text      *Text
 
 	authenticated bool
 }
 
 func (c *Client) SetToken(t string) {
 	c.loginPass.SetToken(t)
+	c.text.SetToken(t)
 }
 
 func (c *Client) Run(ctx context.Context) error {
@@ -73,7 +77,7 @@ LOOP:
 		}
 
 		prompt := promptui.Select{
-			Label: "Select option:",
+			Label: "Select category:",
 			Items: []string{OptLoginPass, OptTextData, OptCards, OptBinaryData, OptExit},
 		}
 
@@ -86,6 +90,10 @@ LOOP:
 		case OptLoginPass:
 			if err := c.loginPass.Run(ctx); err != nil {
 				log.Err(err).Msg("login pass failed")
+			}
+		case OptTextData:
+			if err := c.text.Run(ctx); err != nil {
+				log.Err(err).Msg("text failed")
 			}
 		case OptExit:
 			fmt.Println("exit")

@@ -26,7 +26,7 @@ func (lp *LoginPass) SetToken(t string) {
 
 func (lp *LoginPass) Run(ctx context.Context) error {
 	prompt := promptui.Select{
-		Label: "Data type",
+		Label: "Choose action",
 		Items: []string{OptAdd, OptList, OptBack},
 	}
 
@@ -102,7 +102,7 @@ func (lp *LoginPass) list(ctx context.Context) error {
 	itmes = append(itmes, OptBack)
 
 	prompt := promptui.Select{
-		Label: "Data type",
+		Label: "Choose creds",
 		Items: itmes,
 	}
 

@@ -18,3 +18,9 @@ type DataLoginPass struct {
 	Login    string
 	Password string
 }
+
+type DataText struct {
+	ID    int32
+	Title string
+	Text  string
+}
