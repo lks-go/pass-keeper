@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -29,6 +31,8 @@ type Service interface {
 	AddDataCard(ctx context.Context, ownerLogin string, data *entity.DataCard) (int32, error)
 	DataCardList(ctx context.Context, ownerLogin string) ([]entity.DataCard, error)
 	DataCard(ctx context.Context, ownerLogin string, ID int32) (*entity.DataCard, error)
+
+	AddDataBinary(ctx context.Context, binary entity.DataBinary) (int32, error)
 }
 
 func New(s Service) *Handler {
@@ -351,6 +355,63 @@ func (h *Handler) GetDataCard(ctx context.Context, request *grpc_api.GetDataRequ
 	}
 
 	return &response, nil
+}
+
+func (h *Handler) AddDataBinary(stream grpc.ClientStreamingServer[grpc_api.AddDataBinaryRequest, grpc_api.AddDataResponse]) error {
+	log.Info().Msg("started to get binary data")
+
+	ch := make(chan byte, 0)
+	chErr := make(chan error, 0)
+	chId := make(chan int32, 0)
+
+	defer func() {
+		close(chErr)
+		close(chId)
+		close(ch)
+	}()
+
+	binary := entity.DataBinary{
+		Body: ch,
+	}
+
+	go func() {
+		log.Info().Msg("started to get binary data in goroutine")
+		id, err := h.service.AddDataBinary(stream.Context(), binary)
+		if err != nil {
+			chErr <- fmt.Errorf("filed to add binary data: %w", err)
+			return
+		}
+
+		chId <- id
+	}()
+
+	for {
+		select {
+		case <-stream.Context().Done():
+			return status.Error(codes.Canceled, stream.Context().Err().Error())
+		case err := <-chErr:
+			log.Err(err)
+			return status.Error(codes.Internal, (codes.Internal).String())
+		default:
+		}
+
+		req, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Err(err).Msg("stream error")
+			return status.Error(codes.Internal, (codes.Internal).String())
+		}
+
+		for _, bodyByte := range req.Body {
+			ch <- bodyByte
+		}
+	}
+
+	return stream.SendAndClose(&grpc_api.AddDataResponse{
+		Id: <-chId,
+	})
 }
 
 func userLogin(ctx context.Context) (string, error) {

@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/lks-go/pass-keeper/internal/service/client/auth"
+	"github.com/lks-go/pass-keeper/internal/service/client/binary"
 	"github.com/lks-go/pass-keeper/internal/service/client/card"
 	"github.com/lks-go/pass-keeper/internal/service/client/loginpass"
 	"github.com/lks-go/pass-keeper/internal/service/client/text"
@@ -19,6 +20,7 @@ type storage interface {
 	auth.Storage
 	text.Storage
 	card.Storage
+	binary.Storage
 }
 
 func New(s storage) *Client {
@@ -27,6 +29,7 @@ func New(s storage) *Client {
 		loginPass: &loginpass.LoginPass{Storage: s},
 		text:      &text.Text{Storage: s},
 		card:      &card.Card{Storage: s},
+		binary:    &binary.Binary{Storage: s},
 	}
 }
 
@@ -35,6 +38,7 @@ type Client struct {
 	loginPass *loginpass.LoginPass
 	text      *text.Text
 	card      *card.Card
+	binary    *binary.Binary
 
 	authenticated bool
 }
@@ -43,6 +47,7 @@ func (c *Client) SetToken(t string) {
 	c.loginPass.SetToken(t)
 	c.text.SetToken(t)
 	c.card.SetToken(t)
+	c.binary.SetToken(t)
 }
 
 func (c *Client) Run(ctx context.Context) error {
@@ -108,6 +113,10 @@ LOOP:
 		case entity.OptCards:
 			if err := c.card.Run(ctx); err != nil {
 				log.Err(err).Msg("text failed")
+			}
+		case entity.OptBinaryData:
+			if err := c.binary.Run(ctx); err != nil {
+				log.Err(err).Msg("binary failed")
 			}
 		case entity.OptExit:
 			fmt.Println("exit")

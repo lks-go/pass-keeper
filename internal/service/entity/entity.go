@@ -33,3 +33,10 @@ type DataCard struct {
 	ExpDate string
 	CVCCode string
 }
+
+type DataBinary struct {
+	ID       int32
+	Title    string
+	FileName string
+	Body     <-chan byte
+}

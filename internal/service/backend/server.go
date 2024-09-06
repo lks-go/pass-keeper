@@ -258,3 +258,16 @@ func (s *Service) decryptCardData(data *entity.DataCard) error {
 
 	return nil
 }
+
+func (s *Service) AddDataBinary(ctx context.Context, binary entity.DataBinary) (int32, error) {
+	for b := range binary.Body {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		default:
+			fmt.Println(b)
+		}
+	}
+
+	return 1, nil
+}

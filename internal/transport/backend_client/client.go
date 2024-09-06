@@ -2,7 +2,9 @@ package backend_client
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -257,4 +259,43 @@ func (c *BackendClient) CardAdd(ctx context.Context, token string, card *entity.
 	}
 
 	return resp.Id, nil
+}
+
+func (c *BackendClient) BinaryAdd(ctx context.Context, token string, binary *entity.DataBinary) (id int32, err error) {
+	md := metadata.Pairs("auth_token", token)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	stream, err := c.client.AddDataBinary(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("request failed: %w", err)
+	}
+
+	for b := range binary.Body {
+		err := stream.Send(&grpc_api.AddDataBinaryRequest{Body: []byte{b}})
+		if err != nil && !errors.Is(err, io.EOF) {
+			return 0, fmt.Errorf("failed to send stream request: %w", err)
+		}
+	}
+
+	streamResp, err := stream.CloseAndRecv()
+	if err != nil {
+		return 0, fmt.Errorf("failed to close and receive: %w", err)
+	}
+
+	resp, err := c.client.AddDataBinaryTitle(ctx, &grpc_api.AddDataBinaryTitleRequest{Id: streamResp.Id, Title: binary.Title})
+	if err != nil {
+		return 0, fmt.Errorf("failed to send binary title: %w", err)
+	}
+
+	return resp.Id, nil
+}
+
+func (c *BackendClient) ListBinary(ctx context.Context, token string) ([]entity.DataBinary, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *BackendClient) BinaryData(ctx context.Context, token string, id int32) (*entity.DataBinary, error) {
+	//TODO implement me
+	panic("implement me")
 }

@@ -30,6 +30,8 @@ const (
 	PassKeeper_AddDataCard_FullMethodName          = "/pass.keeper.PassKeeper/AddDataCard"
 	PassKeeper_GetDataCardList_FullMethodName      = "/pass.keeper.PassKeeper/GetDataCardList"
 	PassKeeper_GetDataCard_FullMethodName          = "/pass.keeper.PassKeeper/GetDataCard"
+	PassKeeper_AddDataBinary_FullMethodName        = "/pass.keeper.PassKeeper/AddDataBinary"
+	PassKeeper_AddDataBinaryTitle_FullMethodName   = "/pass.keeper.PassKeeper/AddDataBinaryTitle"
 )
 
 // PassKeeperClient is the client API for PassKeeper service.
@@ -47,6 +49,8 @@ type PassKeeperClient interface {
 	AddDataCard(ctx context.Context, in *AddDataCardRequest, opts ...grpc.CallOption) (*AddDataResponse, error)
 	GetDataCardList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error)
 	GetDataCard(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataCardResponse, error)
+	AddDataBinary(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[AddDataBinaryRequest, AddDataResponse], error)
+	AddDataBinaryTitle(ctx context.Context, in *AddDataBinaryTitleRequest, opts ...grpc.CallOption) (*AddDataResponse, error)
 }
 
 type passKeeperClient struct {
@@ -167,6 +171,29 @@ func (c *passKeeperClient) GetDataCard(ctx context.Context, in *GetDataRequest, 
 	return out, nil
 }
 
+func (c *passKeeperClient) AddDataBinary(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[AddDataBinaryRequest, AddDataResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &PassKeeper_ServiceDesc.Streams[0], PassKeeper_AddDataBinary_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[AddDataBinaryRequest, AddDataResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PassKeeper_AddDataBinaryClient = grpc.ClientStreamingClient[AddDataBinaryRequest, AddDataResponse]
+
+func (c *passKeeperClient) AddDataBinaryTitle(ctx context.Context, in *AddDataBinaryTitleRequest, opts ...grpc.CallOption) (*AddDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddDataResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_AddDataBinaryTitle_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PassKeeperServer is the server API for PassKeeper service.
 // All implementations must embed UnimplementedPassKeeperServer
 // for forward compatibility.
@@ -182,6 +209,8 @@ type PassKeeperServer interface {
 	AddDataCard(context.Context, *AddDataCardRequest) (*AddDataResponse, error)
 	GetDataCardList(context.Context, *GetDataListRequest) (*GetDataListResponse, error)
 	GetDataCard(context.Context, *GetDataRequest) (*GetDataCardResponse, error)
+	AddDataBinary(grpc.ClientStreamingServer[AddDataBinaryRequest, AddDataResponse]) error
+	AddDataBinaryTitle(context.Context, *AddDataBinaryTitleRequest) (*AddDataResponse, error)
 	mustEmbedUnimplementedPassKeeperServer()
 }
 
@@ -224,6 +253,12 @@ func (UnimplementedPassKeeperServer) GetDataCardList(context.Context, *GetDataLi
 }
 func (UnimplementedPassKeeperServer) GetDataCard(context.Context, *GetDataRequest) (*GetDataCardResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDataCard not implemented")
+}
+func (UnimplementedPassKeeperServer) AddDataBinary(grpc.ClientStreamingServer[AddDataBinaryRequest, AddDataResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method AddDataBinary not implemented")
+}
+func (UnimplementedPassKeeperServer) AddDataBinaryTitle(context.Context, *AddDataBinaryTitleRequest) (*AddDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddDataBinaryTitle not implemented")
 }
 func (UnimplementedPassKeeperServer) mustEmbedUnimplementedPassKeeperServer() {}
 func (UnimplementedPassKeeperServer) testEmbeddedByValue()                    {}
@@ -444,6 +479,31 @@ func _PassKeeper_GetDataCard_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PassKeeper_AddDataBinary_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PassKeeperServer).AddDataBinary(&grpc.GenericServerStream[AddDataBinaryRequest, AddDataResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PassKeeper_AddDataBinaryServer = grpc.ClientStreamingServer[AddDataBinaryRequest, AddDataResponse]
+
+func _PassKeeper_AddDataBinaryTitle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddDataBinaryTitleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).AddDataBinaryTitle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_AddDataBinaryTitle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).AddDataBinaryTitle(ctx, req.(*AddDataBinaryTitleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PassKeeper_ServiceDesc is the grpc.ServiceDesc for PassKeeper service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -495,7 +555,17 @@ var PassKeeper_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetDataCard",
 			Handler:    _PassKeeper_GetDataCard_Handler,
 		},
+		{
+			MethodName: "AddDataBinaryTitle",
+			Handler:    _PassKeeper_AddDataBinaryTitle_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "AddDataBinary",
+			Handler:       _PassKeeper_AddDataBinary_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "pass_keeper.proto",
 }

@@ -61,6 +61,14 @@ message GetDataCardResponse {
   string cvc_code = 6;
 }
 
+message AddDataBinaryRequest {
+  bytes body = 1;
+}
+
+message AddDataBinaryTitleRequest {
+  int32 id = 1;
+  string title = 2;
+}
 
 // Common messages that have the same fields for different request types
 message GetDataRequest {
@@ -97,4 +105,7 @@ service PassKeeper {
   rpc AddDataCard(AddDataCardRequest) returns (AddDataResponse);
   rpc GetDataCardList(GetDataListRequest) returns (GetDataListResponse);
   rpc GetDataCard(GetDataRequest) returns (GetDataCardResponse);
+
+  rpc AddDataBinary(stream AddDataBinaryRequest) returns (AddDataResponse);
+  rpc AddDataBinaryTitle(AddDataBinaryTitleRequest) returns (AddDataResponse);
 }
