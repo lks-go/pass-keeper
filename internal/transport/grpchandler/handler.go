@@ -161,7 +161,7 @@ func (h *Handler) GetDataLoginPass(ctx context.Context, request *grpc_api.GetDat
 	response := grpc_api.GetDataLoginPassResponse{
 		Id:    data.ID,
 		Title: data.Title,
-		Login: data.Title,
+		Login: data.Login,
 		Pass:  data.Password,
 	}
 

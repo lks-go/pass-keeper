@@ -6,14 +6,14 @@ import (
 	"strconv"
 
 	"github.com/manifoldco/promptui"
-	"github.com/rs/zerolog/log"
 
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
 type LoginPassClient interface {
 	ListLoginPass(ctx context.Context, token string) ([]entity.DataLoginPass, error)
-	LoginPassData(ctx context.Context, id int32, token string) (*entity.DataLoginPass, error)
+	LoginPassData(ctx context.Context, token string, id int32) (*entity.DataLoginPass, error)
+	LoginPassAdd(ctx context.Context, token string, title, login, pass string) (id int32, err error)
 }
 
 type LoginPass struct {
@@ -56,7 +56,40 @@ func (lp *LoginPass) Run(ctx context.Context) error {
 }
 
 func (lp *LoginPass) add(ctx context.Context) error {
-	log.Info().Msg("added log and pass")
+	prompt := promptui.Prompt{
+		Label: "Input title",
+	}
+
+	title, err := prompt.Run()
+	if err != nil {
+		return fmt.Errorf("prompt failed: %w", err)
+	}
+
+	prompt = promptui.Prompt{
+		Label: "Input login",
+	}
+
+	login, err := prompt.Run()
+	if err != nil {
+		return fmt.Errorf("prompt failed: %w", err)
+	}
+
+	prompt = promptui.Prompt{
+		Label: "Input password",
+	}
+
+	pass, err := prompt.Run()
+	if err != nil {
+		return fmt.Errorf("prompt failed: %w", err)
+	}
+
+	id, err := lp.client.LoginPassAdd(ctx, lp.token, title, login, pass)
+	if err != nil {
+		return fmt.Errorf("failed to add login and pass: %w", err)
+	}
+
+	fmt.Printf("Record id: %d", id)
+
 	return nil
 }
 
@@ -88,7 +121,7 @@ func (lp *LoginPass) get(ctx context.Context) error {
 		return fmt.Errorf("invalid number: %w", err)
 	}
 
-	data, err := lp.client.LoginPassData(ctx, int32(id), lp.token)
+	data, err := lp.client.LoginPassData(ctx, lp.token, int32(id))
 	if err != nil {
 		return fmt.Errorf("failed to get login and pass: %w", err)
 	}
