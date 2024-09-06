@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/manifoldco/promptui"
 	"github.com/rs/zerolog/log"
@@ -12,6 +13,7 @@ import (
 
 type LoginPassClient interface {
 	ListLoginPass(ctx context.Context, token string) ([]entity.DataLoginPass, error)
+	LoginPassData(ctx context.Context, id int32, token string) (*entity.DataLoginPass, error)
 }
 
 type LoginPass struct {
@@ -72,6 +74,26 @@ func (lp *LoginPass) list(ctx context.Context) error {
 }
 
 func (lp *LoginPass) get(ctx context.Context) error {
-	log.Info().Msg("got log and pass")
+	prompt := promptui.Prompt{
+		Label: "Chose and input id",
+	}
+
+	input, err := prompt.Run()
+	if err != nil {
+		return fmt.Errorf("prompt failed: %w", err)
+	}
+
+	id, err := strconv.Atoi(input)
+	if err != nil {
+		return fmt.Errorf("invalid number: %w", err)
+	}
+
+	data, err := lp.client.LoginPassData(ctx, int32(id), lp.token)
+	if err != nil {
+		return fmt.Errorf("failed to get login and pass: %w", err)
+	}
+
+	fmt.Printf("id: %d;\title: %s\nlogin: %s\nPassword: %s\n\n", data.ID, data.Title, data.Login, data.Password)
+
 	return nil
 }

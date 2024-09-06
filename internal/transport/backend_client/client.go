@@ -74,6 +74,25 @@ func (c *BackendClient) ListLoginPass(ctx context.Context, token string) ([]enti
 	return list, nil
 }
 
+func (c *BackendClient) LoginPassData(ctx context.Context, id int32, token string) (*entity.DataLoginPass, error) {
+	md := metadata.Pairs("auth_token", token)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := c.client.GetDataLoginPass(ctx, &grpc_api.GetDataRequest{Id: id})
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	data := entity.DataLoginPass{
+		ID:       resp.Id,
+		Title:    resp.Title,
+		Login:    resp.Login,
+		Password: resp.Pass,
+	}
+
+	return &data, nil
+}
+
 func (c *BackendClient) Reg(ctx context.Context, login string, password string) error {
 	req := grpc_api.RegisterUserRequest{
 		Login:    login,
