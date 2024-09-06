@@ -3,31 +3,32 @@ package client
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/manifoldco/promptui"
 
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
-type LoginPassClient interface {
+type TextClient interface {
 	ListLoginPass(ctx context.Context, token string) ([]entity.DataLoginPass, error)
 	LoginPassData(ctx context.Context, token string, id int32) (*entity.DataLoginPass, error)
 	LoginPassAdd(ctx context.Context, token string, title, login, pass string) (id int32, err error)
 }
 
-type LoginPass struct {
-	client LoginPassClient
+type Text struct {
+	client TextClient
 	token  string
 }
 
-func (lp *LoginPass) SetToken(t string) {
+func (lp *Text) SetToken(t string) {
 	lp.token = t
 }
 
-func (lp *LoginPass) Run(ctx context.Context) error {
+func (lp *Text) Run(ctx context.Context) error {
 	prompt := promptui.Select{
 		Label: "Data type",
-		Items: []string{OptAdd, OptList, OptBack},
+		Items: []string{OptAdd, OptList, OptGet, OptBack},
 	}
 
 	_, result, err := prompt.Run()
@@ -44,13 +45,17 @@ func (lp *LoginPass) Run(ctx context.Context) error {
 		if err := lp.list(ctx); err != nil {
 			return fmt.Errorf("failed to list data: %w", err)
 		}
+	case OptGet:
+		if err := lp.get(ctx); err != nil {
+			return fmt.Errorf("failed to get data: %w", err)
+		}
 	case OptBack:
 	}
 
 	return nil
 }
 
-func (lp *LoginPass) add(ctx context.Context) error {
+func (lp *Text) add(ctx context.Context) error {
 	prompt := promptui.Prompt{
 		Label: "Input title",
 	}
@@ -88,48 +93,40 @@ func (lp *LoginPass) add(ctx context.Context) error {
 	return nil
 }
 
-func (lp *LoginPass) list(ctx context.Context) error {
+func (lp *Text) list(ctx context.Context) error {
 	list, err := lp.client.ListLoginPass(ctx, lp.token)
 	if err != nil {
 		return fmt.Errorf("failed to get list of logins and passwords: %w", err)
 	}
 
-	itmes := make([]string, 0, len(list))
 	for _, item := range list {
-		itmes = append(itmes, item.Title)
-	}
-
-	itmes = append(itmes, OptBack)
-
-	prompt := promptui.Select{
-		Label: "Data type",
-		Items: itmes,
-	}
-
-	n, result, err := prompt.Run()
-	if err != nil {
-		return fmt.Errorf("prompt failed: %w", err)
-	}
-
-	if result == OptBack {
-		return nil
-	}
-
-	if err := lp.get(ctx, list[n].ID); err != nil {
-		return fmt.Errorf("failed to get chosen data: %w", err)
+		fmt.Printf("id: %d;\ttitle: %s\n", item.ID, item.Title)
 	}
 
 	return nil
 }
 
-func (lp *LoginPass) get(ctx context.Context, id int32) error {
+func (lp *Text) get(ctx context.Context) error {
+	prompt := promptui.Prompt{
+		Label: "Chose and input id",
+	}
 
-	data, err := lp.client.LoginPassData(ctx, lp.token, id)
+	input, err := prompt.Run()
+	if err != nil {
+		return fmt.Errorf("prompt failed: %w", err)
+	}
+
+	id, err := strconv.Atoi(input)
+	if err != nil {
+		return fmt.Errorf("invalid number: %w", err)
+	}
+
+	data, err := lp.client.LoginPassData(ctx, lp.token, int32(id))
 	if err != nil {
 		return fmt.Errorf("failed to get login and pass: %w", err)
 	}
 
-	fmt.Printf("%s\nlogin: %s\nPassword: %s\n\n", data.Title, data.Login, data.Password)
+	fmt.Printf("id: %d;\title: %s\nlogin: %s\nPassword: %s\n\n", data.ID, data.Title, data.Login, data.Password)
 
 	return nil
 }

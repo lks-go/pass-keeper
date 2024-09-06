@@ -28,7 +28,7 @@ type Client struct {
 }
 
 func (c *Client) SetToken(t string) {
-	c.loginPass.SetToenk(t)
+	c.loginPass.SetToken(t)
 }
 
 func (c *Client) Run(ctx context.Context) error {
