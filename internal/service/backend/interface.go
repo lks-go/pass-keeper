@@ -21,6 +21,13 @@ type Storage interface {
 	AddCard(ctx context.Context, owner string, data *entity.DataCard) (int32, error)
 	CardList(ctx context.Context, owner string) ([]entity.DataCard, error)
 	CardByID(ctx context.Context, owner string, ID int32) (*entity.DataCard, error)
+
+	AddBinary(ctx context.Context, owner string, binary *entity.DataBinary) (int32, error)
+	UpdateBinary(ctx context.Context, binary *entity.DataBinary) error
+	BinaryList(ctx context.Context, owner string) ([]entity.DataBinary, error)
+	BinaryByID(ctx context.Context, owner string, ID int32) (*entity.DataBinary, error)
+	AddBinaryChunk(ctx context.Context, binaryID int32, encryptedData string, orderNumber int) error
+	BinaryChunk(ctx context.Context, binaryID int32, orderNumber int) (encryptedData string, err error)
 }
 
 type UserLogin interface {

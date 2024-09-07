@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/lks-go/pass-keeper/internal/lib/token"
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
 type Service struct {
+	BinaryChunkSize int
+
 	Storage  Storage
 	Password PasswordHash
 	Token    *token.Token
@@ -259,15 +263,98 @@ func (s *Service) decryptCardData(data *entity.DataCard) error {
 	return nil
 }
 
-func (s *Service) AddDataBinary(ctx context.Context, binary entity.DataBinary) (int32, error) {
+func (s *Service) AddDataBinary(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	g, ctx := errgroup.WithContext(ctx)
+	cnt := 0
+	chunkNum := 0
+	chunk := make([]byte, 0, s.BinaryChunkSize)
+
+	binID, err := s.Storage.AddBinary(ctx, u.ID, binary)
+	if err != nil {
+		return 0, fmt.Errorf("failed to add binary: %w", err)
+	}
+
 	for b := range binary.Body {
 		select {
 		case <-ctx.Done():
 			return 0, ctx.Err()
 		default:
-			fmt.Println(b)
+		}
+
+		chunk = append(chunk, b)
+		cnt++
+
+		if cnt == s.BinaryChunkSize {
+			cnt = 0
+			chunkNum++
+
+			func(orderNumber int) {
+				chunkToEncrypt := string(chunk)
+				chunk = chunk[:0]
+
+				g.Go(func() error {
+					encryptedChunk, err := s.Crypt.Encrypt(chunkToEncrypt)
+					if err != nil {
+						return fmt.Errorf("failed to encrypt chunk %d: %w", orderNumber, err)
+					}
+
+					err = s.Storage.AddBinaryChunk(ctx, binID, encryptedChunk, orderNumber)
+					if err != nil {
+						return fmt.Errorf("failed to add binary chunk %d: %w", orderNumber, err)
+					}
+
+					return nil
+				})
+			}(chunkNum)
 		}
 	}
 
-	return 1, nil
+	if len(chunk) > 0 {
+		chunkNum++
+		func(orderNumber int) {
+			chunkToEncrypt := string(chunk)
+			g.Go(func() error {
+				encryptedChunk, err := s.Crypt.Encrypt(chunkToEncrypt)
+				if err != nil {
+					return fmt.Errorf("failed to encrypt chunk %d: %w", orderNumber, err)
+				}
+
+				err = s.Storage.AddBinaryChunk(ctx, binID, encryptedChunk, orderNumber)
+				if err != nil {
+					return fmt.Errorf("failed to add binary chunk %d: %w", orderNumber, err)
+				}
+
+				return nil
+			})
+		}(chunkNum)
+	}
+
+	if err := g.Wait(); err != nil {
+		return 0, fmt.Errorf("errgroup error: %w", err)
+	}
+
+	return binID, nil
+}
+
+func (s *Service) AddDataBinaryTitle(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	bin, err := s.Storage.BinaryByID(ctx, u.ID, binary.ID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get binar by ID: %w", err)
+	}
+
+	if err := s.Storage.UpdateBinary(ctx, binary); err != nil {
+		return 0, fmt.Errorf("failed to update binary: %w", err)
+	}
+
+	return bin.ID, err
 }

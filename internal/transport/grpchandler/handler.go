@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -32,7 +33,8 @@ type Service interface {
 	DataCardList(ctx context.Context, ownerLogin string) ([]entity.DataCard, error)
 	DataCard(ctx context.Context, ownerLogin string, ID int32) (*entity.DataCard, error)
 
-	AddDataBinary(ctx context.Context, binary entity.DataBinary) (int32, error)
+	AddDataBinary(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error)
+	AddDataBinaryTitle(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error)
 }
 
 func New(s Service) *Handler {
@@ -358,60 +360,87 @@ func (h *Handler) GetDataCard(ctx context.Context, request *grpc_api.GetDataRequ
 }
 
 func (h *Handler) AddDataBinary(stream grpc.ClientStreamingServer[grpc_api.AddDataBinaryRequest, grpc_api.AddDataResponse]) error {
-	log.Info().Msg("started to get binary data")
+	// TODO resolve ctx problem
+	//ownerLogin, err := userLogin(stream.Context())
+	//if err != nil {
+	//	return status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	//}
 
+	ownerLogin := "u"
+
+	var resultID int32
 	ch := make(chan byte, 0)
-	chErr := make(chan error, 0)
-	chId := make(chan int32, 0)
-
-	defer func() {
-		close(chErr)
-		close(chId)
-		close(ch)
-	}()
-
 	binary := entity.DataBinary{
 		Body: ch,
 	}
 
-	go func() {
-		log.Info().Msg("started to get binary data in goroutine")
-		id, err := h.service.AddDataBinary(stream.Context(), binary)
+	g, ctx := errgroup.WithContext(stream.Context())
+
+	g.Go(func() error {
+		id, err := h.service.AddDataBinary(ctx, ownerLogin, &binary)
 		if err != nil {
-			chErr <- fmt.Errorf("filed to add binary data: %w", err)
-			return
+			return fmt.Errorf("filed to add binary data: %w", err)
 		}
 
-		chId <- id
-	}()
+		resultID = id
+		return nil
+	})
 
-	for {
-		select {
-		case <-stream.Context().Done():
-			return status.Error(codes.Canceled, stream.Context().Err().Error())
-		case err := <-chErr:
-			log.Err(err)
-			return status.Error(codes.Internal, (codes.Internal).String())
-		default:
+	g.Go(func() error {
+		defer close(ch)
+
+	LOOP:
+		for {
+			req, err := stream.Recv()
+			if err != nil {
+				switch {
+				case err == io.EOF:
+					break LOOP
+				default:
+					return fmt.Errorf("failed to get streaming data: %w", err)
+				}
+			}
+
+			for _, bodyByte := range req.Body {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case ch <- bodyByte:
+				}
+			}
 		}
 
-		req, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Err(err).Msg("stream error")
-			return status.Error(codes.Internal, (codes.Internal).String())
-		}
+		return nil
+	})
 
-		for _, bodyByte := range req.Body {
-			ch <- bodyByte
-		}
+	if err := g.Wait(); err != nil {
+		log.Error().Err(err).Msg("group error")
+		return status.Error(codes.Internal, (codes.Internal).String())
 	}
 
 	return stream.SendAndClose(&grpc_api.AddDataResponse{
-		Id: <-chId,
+		Id: resultID,
 	})
+}
+
+func (h *Handler) AddDataBinaryTitle(ctx context.Context, request *grpc_api.AddDataBinaryTitleRequest) (*grpc_api.AddDataResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	data := entity.DataBinary{
+		ID:    request.Id,
+		Title: request.Title,
+	}
+
+	id, err := h.service.AddDataBinaryTitle(ctx, ownerLogin, &data)
+	if err != nil {
+		log.Error().Err(err)
+		return nil, status.Error(codes.Internal, (codes.Internal).String())
+	}
+
+	return &grpc_api.AddDataResponse{Id: id}, nil
 }
 
 func userLogin(ctx context.Context) (string, error) {

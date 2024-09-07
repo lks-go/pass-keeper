@@ -35,10 +35,10 @@ generate_grpc:
 	--go_out=./pkg/grpc --go_opt=paths=source_relative \
 	--go-grpc_out=./pkg/grpc --go-grpc_opt=paths=source_relative pass-keeper.proto
 
-run_server:
+server_run:
 	go run cmd/server/main.go
 
-run_client:
+client_run:
 	go run cmd/client/main.go
 
 new_migration:

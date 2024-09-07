@@ -3,13 +3,12 @@ package binary
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/manifoldco/promptui"
-	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
@@ -78,41 +77,61 @@ func (b *Binary) add(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("filed to open file: %w", err)
 	}
+	defer f.Close()
 
 	br := bufio.NewReader(f)
 	ch := make(chan byte, 0)
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
-	go func() {
-		defer close(ch)
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		defer func() {
+			close(ch)
+		}()
 
 	LOOP:
 		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
 			b, err := br.ReadByte()
 			if err != nil {
-				if errors.Is(err, io.EOF) {
+				if err == io.EOF {
 					break LOOP
 				}
-
-				log.Err(err).Msg("failed to read byte from file")
-				cancel()
+				return fmt.Errorf("failed to read byte: %w", err)
 			}
+
 			ch <- b
 		}
-	}()
 
-	data := entity.DataBinary{
-		Title:    title,
-		FileName: file,
-		Body:     ch,
-	}
-	id, err := b.Storage.BinaryAdd(ctx, b.token, &data)
-	if err != nil {
-		return fmt.Errorf("failed to add file: %w", err)
+		return nil
+	})
+
+	var recordId int32
+	g.Go(func() error {
+		data := entity.DataBinary{
+			Title:    title,
+			FileName: file,
+			Body:     ch,
+		}
+		id, err := b.Storage.BinaryAdd(ctx, b.token, &data)
+		if err != nil {
+			return fmt.Errorf("failed to add file: %w", err)
+		}
+
+		recordId = id
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("error group failed: %w", err)
 	}
 
-	fmt.Printf("Record id: %d", id)
+	fmt.Printf("Added record id: %d", recordId)
 
 	return nil
 }

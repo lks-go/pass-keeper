@@ -2,10 +2,10 @@ package backend_client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
@@ -272,7 +272,11 @@ func (c *BackendClient) BinaryAdd(ctx context.Context, token string, binary *ent
 
 	for b := range binary.Body {
 		err := stream.Send(&grpc_api.AddDataBinaryRequest{Body: []byte{b}})
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil {
+			if err == io.EOF {
+				log.Err(err).Msg("error stream request")
+				continue
+			}
 			return 0, fmt.Errorf("failed to send stream request: %w", err)
 		}
 	}

@@ -58,13 +58,14 @@ func (app *App) Build() error {
 		return fmt.Errorf("failed to get crypt: %w", err)
 	}
 
+	servCfg := service.ServerConfig{BinaryChunkSize: app.config.BinaryChunkSize}
 	servDeps := service.ServerDeps{
 		Storage:      storage,
 		PasswordHash: passwordHasher,
 		Token:        token,
 		Crypt:        crypt,
 	}
-	service := service.NewBackend(servDeps)
+	service := service.NewBackend(servCfg, servDeps)
 
 	grpcHandler := grpchandler.New(service)
 

@@ -26,4 +26,5 @@ type Config struct {
 	TokenSecretKey      string        `env:"TOKEN_SECRET_KEY" env-required:"true"`
 	TokenExpirationTime time.Duration `env:"TOKEN_EXPIRATION_TIME" env-default:"10m"`
 	CryptSecretKey      string        `env:"CRYPT_SECRET_KEY" env-required:"true"`
+	BinaryChunkSize     int           `env:"BINARY_CHUNK_SIZE" env-default:"1024"`
 }
