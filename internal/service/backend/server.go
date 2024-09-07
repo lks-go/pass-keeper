@@ -211,58 +211,6 @@ func (s *Service) DataCard(ctx context.Context, ownerLogin string, ID int32) (*e
 	return data, nil
 }
 
-func (s *Service) encryptCardData(data *entity.DataCard) error {
-	var err error
-
-	data.Number, err = s.Crypt.Encrypt(data.Number)
-	if err != nil {
-		return fmt.Errorf("failed to encrypt card number: %w", err)
-	}
-
-	data.Owner, err = s.Crypt.Encrypt(data.Owner)
-	if err != nil {
-		return fmt.Errorf("failed to encrypt card owner: %w", err)
-	}
-
-	data.ExpDate, err = s.Crypt.Encrypt(data.ExpDate)
-	if err != nil {
-		return fmt.Errorf("failed to encrypt expiration date: %w", err)
-	}
-
-	data.CVCCode, err = s.Crypt.Encrypt(data.CVCCode)
-	if err != nil {
-		return fmt.Errorf("failed to encrypt cvc code: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Service) decryptCardData(data *entity.DataCard) error {
-	var err error
-
-	data.Number, err = s.Crypt.Decrypt(data.Number)
-	if err != nil {
-		return fmt.Errorf("failed to decrypt card number: %w", err)
-	}
-
-	data.Owner, err = s.Crypt.Decrypt(data.Owner)
-	if err != nil {
-		return fmt.Errorf("failed to decrypt card owner: %w", err)
-	}
-
-	data.ExpDate, err = s.Crypt.Decrypt(data.ExpDate)
-	if err != nil {
-		return fmt.Errorf("failed to decrypt expiration date: %w", err)
-	}
-
-	data.CVCCode, err = s.Crypt.Decrypt(data.CVCCode)
-	if err != nil {
-		return fmt.Errorf("failed to decrypt cvc code: %w", err)
-	}
-
-	return nil
-}
-
 func (s *Service) AddDataBinary(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error) {
 	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
 	if err != nil {
@@ -357,4 +305,70 @@ func (s *Service) AddDataBinaryTitle(ctx context.Context, ownerLogin string, bin
 	}
 
 	return bin.ID, err
+}
+
+func (s *Service) DataBinaryList(ctx context.Context, ownerLogin string) ([]entity.DataBinary, error) {
+	u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by login: %w", err)
+	}
+
+	data, err := s.Storage.BinaryList(ctx, u.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get binary list: %w", err)
+	}
+
+	return data, nil
+}
+
+func (s *Service) encryptCardData(data *entity.DataCard) error {
+	var err error
+
+	data.Number, err = s.Crypt.Encrypt(data.Number)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt card number: %w", err)
+	}
+
+	data.Owner, err = s.Crypt.Encrypt(data.Owner)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt card owner: %w", err)
+	}
+
+	data.ExpDate, err = s.Crypt.Encrypt(data.ExpDate)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt expiration date: %w", err)
+	}
+
+	data.CVCCode, err = s.Crypt.Encrypt(data.CVCCode)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt cvc code: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) decryptCardData(data *entity.DataCard) error {
+	var err error
+
+	data.Number, err = s.Crypt.Decrypt(data.Number)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt card number: %w", err)
+	}
+
+	data.Owner, err = s.Crypt.Decrypt(data.Owner)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt card owner: %w", err)
+	}
+
+	data.ExpDate, err = s.Crypt.Decrypt(data.ExpDate)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt expiration date: %w", err)
+	}
+
+	data.CVCCode, err = s.Crypt.Decrypt(data.CVCCode)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt cvc code: %w", err)
+	}
+
+	return nil
 }

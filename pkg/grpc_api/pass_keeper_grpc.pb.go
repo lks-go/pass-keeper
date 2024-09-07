@@ -32,6 +32,8 @@ const (
 	PassKeeper_GetDataCard_FullMethodName          = "/pass.keeper.PassKeeper/GetDataCard"
 	PassKeeper_AddDataBinary_FullMethodName        = "/pass.keeper.PassKeeper/AddDataBinary"
 	PassKeeper_AddDataBinaryTitle_FullMethodName   = "/pass.keeper.PassKeeper/AddDataBinaryTitle"
+	PassKeeper_GetDataBinaryList_FullMethodName    = "/pass.keeper.PassKeeper/GetDataBinaryList"
+	PassKeeper_GetDataBinary_FullMethodName        = "/pass.keeper.PassKeeper/GetDataBinary"
 )
 
 // PassKeeperClient is the client API for PassKeeper service.
@@ -51,6 +53,8 @@ type PassKeeperClient interface {
 	GetDataCard(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (*GetDataCardResponse, error)
 	AddDataBinary(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[AddDataBinaryRequest, AddDataResponse], error)
 	AddDataBinaryTitle(ctx context.Context, in *AddDataBinaryTitleRequest, opts ...grpc.CallOption) (*AddDataResponse, error)
+	GetDataBinaryList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error)
+	GetDataBinary(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetDataBinaryResponse], error)
 }
 
 type passKeeperClient struct {
@@ -194,6 +198,35 @@ func (c *passKeeperClient) AddDataBinaryTitle(ctx context.Context, in *AddDataBi
 	return out, nil
 }
 
+func (c *passKeeperClient) GetDataBinaryList(ctx context.Context, in *GetDataListRequest, opts ...grpc.CallOption) (*GetDataListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDataListResponse)
+	err := c.cc.Invoke(ctx, PassKeeper_GetDataBinaryList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *passKeeperClient) GetDataBinary(ctx context.Context, in *GetDataRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetDataBinaryResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &PassKeeper_ServiceDesc.Streams[1], PassKeeper_GetDataBinary_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[GetDataRequest, GetDataBinaryResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PassKeeper_GetDataBinaryClient = grpc.ServerStreamingClient[GetDataBinaryResponse]
+
 // PassKeeperServer is the server API for PassKeeper service.
 // All implementations must embed UnimplementedPassKeeperServer
 // for forward compatibility.
@@ -211,6 +244,8 @@ type PassKeeperServer interface {
 	GetDataCard(context.Context, *GetDataRequest) (*GetDataCardResponse, error)
 	AddDataBinary(grpc.ClientStreamingServer[AddDataBinaryRequest, AddDataResponse]) error
 	AddDataBinaryTitle(context.Context, *AddDataBinaryTitleRequest) (*AddDataResponse, error)
+	GetDataBinaryList(context.Context, *GetDataListRequest) (*GetDataListResponse, error)
+	GetDataBinary(*GetDataRequest, grpc.ServerStreamingServer[GetDataBinaryResponse]) error
 	mustEmbedUnimplementedPassKeeperServer()
 }
 
@@ -259,6 +294,12 @@ func (UnimplementedPassKeeperServer) AddDataBinary(grpc.ClientStreamingServer[Ad
 }
 func (UnimplementedPassKeeperServer) AddDataBinaryTitle(context.Context, *AddDataBinaryTitleRequest) (*AddDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddDataBinaryTitle not implemented")
+}
+func (UnimplementedPassKeeperServer) GetDataBinaryList(context.Context, *GetDataListRequest) (*GetDataListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataBinaryList not implemented")
+}
+func (UnimplementedPassKeeperServer) GetDataBinary(*GetDataRequest, grpc.ServerStreamingServer[GetDataBinaryResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method GetDataBinary not implemented")
 }
 func (UnimplementedPassKeeperServer) mustEmbedUnimplementedPassKeeperServer() {}
 func (UnimplementedPassKeeperServer) testEmbeddedByValue()                    {}
@@ -504,6 +545,35 @@ func _PassKeeper_AddDataBinaryTitle_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PassKeeper_GetDataBinaryList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PassKeeperServer).GetDataBinaryList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PassKeeper_GetDataBinaryList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PassKeeperServer).GetDataBinaryList(ctx, req.(*GetDataListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PassKeeper_GetDataBinary_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetDataRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(PassKeeperServer).GetDataBinary(m, &grpc.GenericServerStream[GetDataRequest, GetDataBinaryResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PassKeeper_GetDataBinaryServer = grpc.ServerStreamingServer[GetDataBinaryResponse]
+
 // PassKeeper_ServiceDesc is the grpc.ServiceDesc for PassKeeper service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -559,12 +629,21 @@ var PassKeeper_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AddDataBinaryTitle",
 			Handler:    _PassKeeper_AddDataBinaryTitle_Handler,
 		},
+		{
+			MethodName: "GetDataBinaryList",
+			Handler:    _PassKeeper_GetDataBinaryList_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "AddDataBinary",
 			Handler:       _PassKeeper_AddDataBinary_Handler,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetDataBinary",
+			Handler:       _PassKeeper_GetDataBinary_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "pass_keeper.proto",

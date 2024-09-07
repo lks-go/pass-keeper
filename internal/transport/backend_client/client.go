@@ -295,8 +295,32 @@ func (c *BackendClient) BinaryAdd(ctx context.Context, token string, binary *ent
 }
 
 func (c *BackendClient) ListBinary(ctx context.Context, token string) ([]entity.DataBinary, error) {
-	//TODO implement me
-	panic("implement me")
+	md := metadata.Pairs("auth_token", token)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := c.client.GetDataBinaryList(ctx, &grpc_api.GetDataListRequest{})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			switch st.Message() {
+			case entity.ErrMissingToken.Error():
+				return nil, entity.ErrMissingToken
+			default:
+				return nil, fmt.Errorf("request failed: %w", err)
+			}
+		}
+
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	list := make([]entity.DataBinary, 0, len(resp.List))
+	for _, data := range resp.List {
+		list = append(list, entity.DataBinary{
+			ID:    data.Id,
+			Title: data.Title,
+		})
+	}
+
+	return list, nil
 }
 
 func (c *BackendClient) BinaryData(ctx context.Context, token string, id int32) (*entity.DataBinary, error) {

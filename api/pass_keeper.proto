@@ -65,6 +65,10 @@ message AddDataBinaryRequest {
   bytes body = 1;
 }
 
+message GetDataBinaryResponse {
+  bytes body = 1;
+}
+
 message AddDataBinaryTitleRequest {
   int32 id = 1;
   string title = 2;
@@ -108,4 +112,6 @@ service PassKeeper {
 
   rpc AddDataBinary(stream AddDataBinaryRequest) returns (AddDataResponse);
   rpc AddDataBinaryTitle(AddDataBinaryTitleRequest) returns (AddDataResponse);
+  rpc GetDataBinaryList(GetDataListRequest) returns (GetDataListResponse);
+  rpc GetDataBinary(GetDataRequest) returns (stream GetDataBinaryResponse);
 }

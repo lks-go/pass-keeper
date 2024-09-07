@@ -35,6 +35,7 @@ type Service interface {
 
 	AddDataBinary(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error)
 	AddDataBinaryTitle(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error)
+	DataBinaryList(ctx context.Context, ownerLogin string) ([]entity.DataBinary, error)
 }
 
 func New(s Service) *Handler {
@@ -441,6 +442,39 @@ func (h *Handler) AddDataBinaryTitle(ctx context.Context, request *grpc_api.AddD
 	}
 
 	return &grpc_api.AddDataResponse{Id: id}, nil
+}
+
+func (h *Handler) GetDataBinaryList(ctx context.Context, _ *grpc_api.GetDataListRequest) (*grpc_api.GetDataListResponse, error) {
+	ownerLogin, err := userLogin(ctx)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	data, err := h.service.DataBinaryList(ctx, ownerLogin)
+	if err != nil {
+		switch {
+		case errors.Is(err, entity.ErrUserNotFound):
+			log.Warn().Str("login", ownerLogin).Msg("user not found")
+			return nil, status.Error(codes.PermissionDenied, (codes.PermissionDenied).String())
+		case errors.Is(err, entity.ErrNoData):
+			return nil, status.Error(codes.NotFound, (codes.NotFound).String())
+		default:
+			log.Error().Err(err).Msg("failed to get card list")
+			return nil, status.Error(codes.Internal, (codes.Internal).String())
+		}
+	}
+
+	list := make([]*grpc_api.GetDataListResponse_Data, 0, len(data))
+	for _, d := range data {
+		respData := grpc_api.GetDataListResponse_Data{
+			Id:    d.ID,
+			Title: d.Title,
+		}
+
+		list = append(list, &respData)
+	}
+
+	return &grpc_api.GetDataListResponse{List: list}, nil
 }
 
 func userLogin(ctx context.Context) (string, error) {
