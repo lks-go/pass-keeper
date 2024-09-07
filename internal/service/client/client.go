@@ -15,6 +15,10 @@ import (
 	"github.com/lks-go/pass-keeper/internal/service/entity"
 )
 
+type Config struct {
+	BinaryDownloadsDir string
+}
+
 type storage interface {
 	loginpass.Storage
 	auth.Storage
@@ -23,13 +27,16 @@ type storage interface {
 	binary.Storage
 }
 
-func New(s storage) *Client {
+func New(cfg Config, s storage) *Client {
 	return &Client{
 		auth:      &auth.Auth{Storage: s},
 		loginPass: &loginpass.LoginPass{Storage: s},
 		text:      &text.Text{Storage: s},
 		card:      &card.Card{Storage: s},
-		binary:    &binary.Binary{Storage: s},
+		binary: &binary.Binary{
+			BinaryDownloadsDir: cfg.BinaryDownloadsDir,
+			Storage:            s,
+		},
 	}
 }
 

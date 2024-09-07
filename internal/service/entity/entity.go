@@ -35,8 +35,7 @@ type DataCard struct {
 }
 
 type DataBinary struct {
-	ID       int32
-	Title    string
-	FileName string
-	Body     <-chan byte
+	ID    int32
+	Title string
+	Body  <-chan byte
 }

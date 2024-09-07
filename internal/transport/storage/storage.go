@@ -295,6 +295,22 @@ func (s *Storage) BinaryByID(ctx context.Context, owner string, ID int32) (*enti
 	return &data, nil
 }
 
+func (s *Storage) BinaryChunkCount(ctx context.Context, binaryID int32) (int, error) {
+	q := `SELECT count(*) FROM binary_data_chunk WHERE binary_data_id = $1`
+
+	var cnt int
+	err := s.db.QueryRowContext(ctx, q, binaryID).Scan(&cnt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, entity.ErrNoData
+		}
+
+		return 0, fmt.Errorf("failed to exec query: %w", err)
+	}
+
+	return cnt, nil
+}
+
 func (s *Storage) AddBinaryChunk(ctx context.Context, binaryID int32, encryptedData string, orderNumber int) error {
 	q := `INSERT INTO binary_data_chunk (binary_data_id, encrypted_chunk, order_number) VALUES ($1, $2, $3)`
 
@@ -307,11 +323,10 @@ func (s *Storage) AddBinaryChunk(ctx context.Context, binaryID int32, encryptedD
 }
 
 func (s *Storage) BinaryChunk(ctx context.Context, binaryID int32, orderNumber int) (string, error) {
-	q := `SELECT binary_data_id, encrypted_chunk FROM binary_data WHERE id = $1 AND order_number = $2`
+	q := `SELECT encrypted_chunk FROM binary_data_chunk WHERE binary_data_id = $1 AND order_number = $2`
 
-	id := 0
 	data := ""
-	err := s.db.QueryRowContext(ctx, q, binaryID, orderNumber).Scan(&id, &data)
+	err := s.db.QueryRowContext(ctx, q, binaryID, orderNumber).Scan(&data)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", entity.ErrNoData

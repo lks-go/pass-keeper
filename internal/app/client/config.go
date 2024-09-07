@@ -16,7 +16,8 @@ func SetupConfig() *Config {
 }
 
 type Config struct {
-	ServerHost     string `env:"SERVER_HOST" env-default:"localhost:9000"`
-	ServerCertPath string `env:"SERVER_CERT_PATH" env-default:"cert/server.crt"`
-	EnableTLS      bool   `env:"ENABLE_TLS" env-default:"true"`
+	ServerHost         string `env:"SERVER_HOST" env-default:"localhost:9000"`
+	ServerCertPath     string `env:"SERVER_CERT_PATH" env-default:"cert/server.crt"`
+	EnableTLS          bool   `env:"ENABLE_TLS" env-default:"true"`
+	BinaryDownloadsDir string `env:"BINARY_DOWNLOADS_DIR" env-default:"./"`
 }

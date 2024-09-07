@@ -113,6 +113,7 @@ func (app *App) startGRPCServer(ctx context.Context) error {
 
 	serverOpts := []grpc.ServerOption{
 		grpc.UnaryInterceptor(app.authInterceptor.CheckAccess),
+		grpc.StreamInterceptor(app.authInterceptor.CheckAccessStream),
 	}
 
 	if app.config.EnableTLS {

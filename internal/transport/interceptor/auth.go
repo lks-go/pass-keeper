@@ -67,3 +67,51 @@ func (a *Auth) CheckAccess(ctx context.Context, req any, info *grpc.UnaryServerI
 	ctx = metadata.AppendToOutgoingContext(ctx, entity.UserLoginHeaderName, login)
 	return handler(ctx, req)
 }
+
+func (a *Auth) CheckAccessStream(srv any, ss grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	md, ok := metadata.FromIncomingContext(ss.Context())
+	if !ok {
+		return status.Error(codes.InvalidArgument, "missing metadata")
+	}
+
+	var login string
+	var claims *token.Claims
+	var err error
+
+	authToken, ok := md[entity.AuthTokenHeader]
+	if !ok {
+		return status.Error(codes.Unauthenticated, entity.ErrMissingToken.Error())
+	}
+
+	claims, err = a.token.ParseJWTToken(authToken[0])
+	if err != nil {
+		switch {
+		case errors.Is(err, token.ErrInvalidToken):
+			return status.Error(codes.InvalidArgument, token.ErrInvalidToken.Error())
+		case errors.Is(err, token.ErrTokenExpired):
+			return status.Error(codes.InvalidArgument, token.ErrTokenExpired.Error())
+		default:
+			log.Error().Err(err).Msg("failed to parse jwt")
+			return status.Error(codes.Internal, (codes.Internal).String())
+		}
+	}
+
+	if claims != nil && claims.Login == "" {
+		return status.Error(codes.Unauthenticated, (codes.Unauthenticated).String())
+	}
+
+	if claims != nil {
+		login = claims.Login
+	}
+
+	ctx := metadata.AppendToOutgoingContext(ss.Context(), entity.UserLoginHeaderName, login)
+	return handler(srv, &serverStreamWrapper{ServerStream: ss, ctx: context.WithValue(ctx, entity.UserLoginHeaderName, login)})
+}
+
+type serverStreamWrapper struct {
+	grpc.ServerStream
+
+	ctx context.Context
+}
+
+func (w *serverStreamWrapper) Context() context.Context { return w.ctx }

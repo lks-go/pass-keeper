@@ -48,7 +48,7 @@ type BackendClient struct {
 }
 
 func (c *BackendClient) ListLoginPass(ctx context.Context, token string) ([]entity.DataLoginPass, error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.GetDataLoginPassList(ctx, &grpc_api.GetDataListRequest{})
@@ -77,7 +77,7 @@ func (c *BackendClient) ListLoginPass(ctx context.Context, token string) ([]enti
 }
 
 func (c *BackendClient) LoginPassData(ctx context.Context, token string, id int32) (*entity.DataLoginPass, error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.GetDataLoginPass(ctx, &grpc_api.GetDataRequest{Id: id})
@@ -96,7 +96,7 @@ func (c *BackendClient) LoginPassData(ctx context.Context, token string, id int3
 }
 
 func (c *BackendClient) LoginPassAdd(ctx context.Context, token string, title, login, pass string) (int32, error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.AddDataLoginPass(ctx, &grpc_api.AddDataLoginPassRequest{Title: title, Login: login, Pass: pass})
@@ -134,7 +134,7 @@ func (c *BackendClient) Auth(ctx context.Context, login string, password string)
 }
 
 func (c *BackendClient) TextAdd(ctx context.Context, token string, title, text string) (id int32, err error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.AddDataText(ctx, &grpc_api.AddDataTextRequest{Title: title, Text: text})
@@ -146,7 +146,7 @@ func (c *BackendClient) TextAdd(ctx context.Context, token string, title, text s
 }
 
 func (c *BackendClient) ListText(ctx context.Context, token string) ([]entity.DataText, error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.GetDataTextList(ctx, &grpc_api.GetDataListRequest{})
@@ -175,7 +175,7 @@ func (c *BackendClient) ListText(ctx context.Context, token string) ([]entity.Da
 }
 
 func (c *BackendClient) TextData(ctx context.Context, token string, id int32) (*entity.DataText, error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.GetDataText(ctx, &grpc_api.GetDataRequest{Id: id})
@@ -193,7 +193,7 @@ func (c *BackendClient) TextData(ctx context.Context, token string, id int32) (*
 }
 
 func (c *BackendClient) ListCard(ctx context.Context, token string) ([]entity.DataCard, error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.GetDataCardList(ctx, &grpc_api.GetDataListRequest{})
@@ -222,7 +222,7 @@ func (c *BackendClient) ListCard(ctx context.Context, token string) ([]entity.Da
 }
 
 func (c *BackendClient) CardData(ctx context.Context, token string, id int32) (*entity.DataCard, error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.GetDataCard(ctx, &grpc_api.GetDataRequest{Id: id})
@@ -243,7 +243,7 @@ func (c *BackendClient) CardData(ctx context.Context, token string, id int32) (*
 }
 
 func (c *BackendClient) CardAdd(ctx context.Context, token string, card *entity.DataCard) (id int32, err error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	req := grpc_api.AddDataCardRequest{
@@ -262,7 +262,7 @@ func (c *BackendClient) CardAdd(ctx context.Context, token string, card *entity.
 }
 
 func (c *BackendClient) BinaryAdd(ctx context.Context, token string, binary *entity.DataBinary) (id int32, err error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	stream, err := c.client.AddDataBinary(ctx)
@@ -295,7 +295,7 @@ func (c *BackendClient) BinaryAdd(ctx context.Context, token string, binary *ent
 }
 
 func (c *BackendClient) ListBinary(ctx context.Context, token string) ([]entity.DataBinary, error) {
-	md := metadata.Pairs("auth_token", token)
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := c.client.GetDataBinaryList(ctx, &grpc_api.GetDataListRequest{})
@@ -324,6 +324,43 @@ func (c *BackendClient) ListBinary(ctx context.Context, token string) ([]entity.
 }
 
 func (c *BackendClient) BinaryData(ctx context.Context, token string, id int32) (*entity.DataBinary, error) {
-	//TODO implement me
-	panic("implement me")
+	md := metadata.Pairs(entity.AuthTokenHeader, token)
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	stream, err := c.client.GetDataBinary(ctx, &grpc_api.GetDataRequest{Id: id})
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	ch := make(chan byte, 0)
+	go func() {
+		defer close(ch)
+
+	LOOP:
+		for {
+			res, err := stream.Recv()
+			if err != nil {
+				switch {
+				case err == io.EOF:
+					break LOOP
+				default:
+					log.Err(err).Msg("failed to get streaming data")
+					return
+				}
+			}
+
+			for _, bodyByte := range res.Body {
+				select {
+				case <-ctx.Done():
+					log.Err(ctx.Err()).Msg("context cancelled")
+					return
+				case ch <- bodyByte:
+				}
+			}
+		}
+	}()
+
+	data := entity.DataBinary{Body: ch}
+
+	return &data, nil
 }

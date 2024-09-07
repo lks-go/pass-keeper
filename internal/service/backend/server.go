@@ -321,6 +321,98 @@ func (s *Service) DataBinaryList(ctx context.Context, ownerLogin string) ([]enti
 	return data, nil
 }
 
+func (s *Service) DataBinary(ctx context.Context, ownerLogin string, binaryID int32) (<-chan byte, <-chan error) {
+	stream := make(chan byte, 0)
+	chErr := make(chan error, 0)
+
+	go func() {
+		defer close(chErr)
+
+		u, err := s.Storage.UserByLogin(ctx, ownerLogin)
+		if err != nil {
+			chErr <- fmt.Errorf("failed to get user by login: %w", err)
+			return
+		}
+
+		data, err := s.Storage.BinaryByID(ctx, u.ID, binaryID)
+		if err != nil {
+			chErr <- fmt.Errorf("failed to get binary by id: %w", err)
+			return
+		}
+
+		cnt, err := s.Storage.BinaryChunkCount(ctx, data.ID)
+		if err != nil {
+			chErr <- fmt.Errorf("failed to get chunks count: %w", err)
+			return
+		}
+
+		chEncryptedChunk := make(chan string, 0)
+		chDecryptedChunk := make(chan string, 0)
+
+		g, ctx := errgroup.WithContext(ctx)
+		g.Go(func() error {
+			defer close(chEncryptedChunk)
+
+			for i := 0; i < cnt; i++ {
+				orderNumber := i + 1
+				encryptedChunk, err := s.Storage.BinaryChunk(ctx, data.ID, orderNumber)
+				if err != nil {
+					return fmt.Errorf("failed to get chunk: %w", err)
+				}
+
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case chEncryptedChunk <- encryptedChunk:
+				}
+			}
+
+			return nil
+		})
+
+		g.Go(func() error {
+			defer close(chDecryptedChunk)
+
+			for encryptedChunk := range chEncryptedChunk {
+				decryptedChunk, err := s.Crypt.Decrypt(encryptedChunk)
+				if err != nil {
+					return fmt.Errorf("failed to decrypt chunk: %w", err)
+				}
+
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case chDecryptedChunk <- decryptedChunk:
+				}
+
+			}
+
+			return nil
+		})
+
+		g.Go(func() error {
+			defer close(stream)
+			for chunk := range chDecryptedChunk {
+				for _, b := range []byte(chunk) {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case stream <- b:
+					}
+				}
+			}
+
+			return nil
+		})
+
+		if err := g.Wait(); err != nil {
+			chErr <- err
+		}
+	}()
+
+	return stream, chErr
+}
+
 func (s *Service) encryptCardData(data *entity.DataCard) error {
 	var err error
 

@@ -36,6 +36,7 @@ type Service interface {
 	AddDataBinary(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error)
 	AddDataBinaryTitle(ctx context.Context, ownerLogin string, binary *entity.DataBinary) (int32, error)
 	DataBinaryList(ctx context.Context, ownerLogin string) ([]entity.DataBinary, error)
+	DataBinary(ctx context.Context, ownerLogin string, binaryID int32) (stream <-chan byte, err <-chan error)
 }
 
 func New(s Service) *Handler {
@@ -361,13 +362,10 @@ func (h *Handler) GetDataCard(ctx context.Context, request *grpc_api.GetDataRequ
 }
 
 func (h *Handler) AddDataBinary(stream grpc.ClientStreamingServer[grpc_api.AddDataBinaryRequest, grpc_api.AddDataResponse]) error {
-	// TODO resolve ctx problem
-	//ownerLogin, err := userLogin(stream.Context())
-	//if err != nil {
-	//	return status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
-	//}
-
-	ownerLogin := "u"
+	ownerLogin, err := userLogin(stream.Context())
+	if err != nil {
+		return status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
 
 	var resultID int32
 	ch := make(chan byte, 0)
@@ -475,6 +473,39 @@ func (h *Handler) GetDataBinaryList(ctx context.Context, _ *grpc_api.GetDataList
 	}
 
 	return &grpc_api.GetDataListResponse{List: list}, nil
+}
+
+func (h *Handler) GetDataBinary(request *grpc_api.GetDataRequest, stream grpc.ServerStreamingServer[grpc_api.GetDataBinaryResponse]) error {
+	ownerLogin, err := userLogin(stream.Context())
+	if err != nil {
+		return status.Error(codes.InvalidArgument, (codes.InvalidArgument).String())
+	}
+
+	g, ctx := errgroup.WithContext(stream.Context())
+	dataStream, chErr := h.service.DataBinary(ctx, ownerLogin, request.Id)
+
+	g.Go(func() error {
+		for {
+			select {
+			case err := <-chErr:
+				return err
+			case <-ctx.Done():
+				return ctx.Err()
+			case b := <-dataStream:
+				if err := stream.Send(&grpc_api.GetDataBinaryResponse{Body: []byte{b}}); err != nil {
+					return fmt.Errorf("failed to send stream request: %w", err)
+				}
+			}
+		}
+
+	})
+
+	if err := g.Wait(); err != nil {
+		log.Error().Err(err).Msg("failed to get binary")
+		return status.Error(codes.Internal, (codes.Internal).String())
+	}
+
+	return nil
 }
 
 func userLogin(ctx context.Context) (string, error) {

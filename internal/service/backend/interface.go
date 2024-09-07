@@ -28,6 +28,7 @@ type Storage interface {
 	BinaryByID(ctx context.Context, owner string, ID int32) (*entity.DataBinary, error)
 	AddBinaryChunk(ctx context.Context, binaryID int32, encryptedData string, orderNumber int) error
 	BinaryChunk(ctx context.Context, binaryID int32, orderNumber int) (encryptedData string, err error)
+	BinaryChunkCount(ctx context.Context, binaryID int32) (int, error)
 }
 
 type UserLogin interface {

@@ -24,7 +24,6 @@ func New(cfg *Config) *App {
 }
 
 func (app *App) Build() error {
-
 	backendClientConfig := backend_client.Config{
 		Host:      app.cfg.ServerHost,
 		CertPath:  app.cfg.ServerCertPath,
@@ -35,7 +34,10 @@ func (app *App) Build() error {
 		return fmt.Errorf("failed to get backend client: %w", err)
 	}
 
-	app.client = client.New(backendClient)
+	clientConfig := client.Config{
+		BinaryDownloadsDir: app.cfg.BinaryDownloadsDir,
+	}
+	app.client = client.New(clientConfig, backendClient)
 
 	return nil
 }

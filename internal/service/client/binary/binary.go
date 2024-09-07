@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/manifoldco/promptui"
 	"golang.org/x/sync/errgroup"
@@ -20,8 +21,9 @@ type Storage interface {
 }
 
 type Binary struct {
-	Storage Storage
-	token   string
+	BinaryDownloadsDir string
+	Storage            Storage
+	token              string
 }
 
 func (b *Binary) SetToken(t string) {
@@ -56,15 +58,6 @@ func (b *Binary) Run(ctx context.Context) error {
 
 func (b *Binary) add(ctx context.Context) error {
 	prompt := promptui.Prompt{
-		Label: "Input title",
-	}
-
-	title, err := prompt.Run()
-	if err != nil {
-		return fmt.Errorf("prompt failed: %w", err)
-	}
-
-	prompt = promptui.Prompt{
 		Label: "Input file name",
 	}
 
@@ -78,6 +71,8 @@ func (b *Binary) add(ctx context.Context) error {
 		return fmt.Errorf("filed to open file: %w", err)
 	}
 	defer f.Close()
+
+	title := filepath.Base(f.Name())
 
 	br := bufio.NewReader(f)
 	ch := make(chan byte, 0)
@@ -114,9 +109,8 @@ func (b *Binary) add(ctx context.Context) error {
 	var recordId int32
 	g.Go(func() error {
 		data := entity.DataBinary{
-			Title:    title,
-			FileName: file,
-			Body:     ch,
+			Title: title,
+			Body:  ch,
 		}
 		id, err := b.Storage.BinaryAdd(ctx, b.token, &data)
 		if err != nil {
@@ -163,21 +157,37 @@ func (b *Binary) list(ctx context.Context) error {
 		return nil
 	}
 
-	if err := b.get(ctx, list[n].ID); err != nil {
+	if err := b.get(ctx, &list[n]); err != nil {
 		return fmt.Errorf("failed to get chosen data: %w", err)
 	}
 
 	return nil
 }
 
-func (b *Binary) get(ctx context.Context, id int32) error {
+func (b *Binary) get(ctx context.Context, data *entity.DataBinary) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	data, err := b.Storage.BinaryData(ctx, b.token, id)
+	streamData, err := b.Storage.BinaryData(ctx, b.token, data.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get login and pass: %w", err)
 	}
 
-	fmt.Printf("%s\nfile name: %s\n\n", data.Title, data.FileName)
+	filename := b.BinaryDownloadsDir + data.Title
+	f, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", filename, err)
+	}
+	defer f.Close()
+
+	for b := range streamData.Body {
+		_, err = f.Write([]byte{b})
+		if err != nil {
+			return fmt.Errorf("failed to write bytes: %w", err)
+		}
+	}
+
+	fmt.Printf("Downloaded file: %s\n\n", filename)
 
 	return nil
 }
