@@ -30,6 +30,7 @@ jobs:
         with:
           name: client-${{ runner.os }}-${{ matrix.arch }}
           path: bin/client
+          retention-days: 1
   release:
     needs: build
     runs-on: ubuntu-latest
