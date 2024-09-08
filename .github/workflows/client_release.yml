@@ -39,7 +39,6 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: app-${{ runner.os }}-${{ matrix.arch }}
           path: dist
       - name: Get Release
         id: get_release
