@@ -1,11 +1,22 @@
 version: "3"
 services:
-  app:
-    container_name: app
+  db:
+    image: postgres:15.8
+    restart: always
+    env_file: ./default.env
+    ports:
+      - "6432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "echo", "check"]
+      interval: 2s
+      retries: 5
+      timeout: 5s
+
+  pass_keeper_back:
     build: .
+    env_file: ./default.env
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
-      - "8080:5000"
-  postgres:
-    image: "postgres:15-alpine"
-    ports:
-      - "5432:5432"
+      - "9000:9000"
