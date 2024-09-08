@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest]
         arch: [amd64]
     steps:
       - uses: actions/checkout@v3
@@ -24,12 +24,12 @@ jobs:
         env:
           GOARCH: ${{ matrix.arch }}
         run: |
-          go build -o bin/app
+          go build -v -o bin/client cmd/client
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: pass-keeper-${{ runner.os }}-${{ matrix.arch }}
-          path: bin/app
+          name: client-${{ runner.os }}-${{ matrix.arch }}
+          path: bin/client
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -37,22 +37,13 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           path: dist
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name || 'no-tag' }}
-          release_name: ${{ github.ref_name || 'no-tag' }} Release
-          draft: false
-          prerelease: false
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARCH: ${{ matrix.arch }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/pass-keeper-${{ runner.os }}-${{ matrix.arch }}
-          asset_name: pass-keeper-${{ runner.os }}-${{ matrix.arch }}
+          asset_path: dist/client-${{ runner.os }}-${{ env.ARCH }}
+          asset_name: client-${{ runner.os }}-${{ env.ARCH }}
           asset_content_type: application/octet-stream
