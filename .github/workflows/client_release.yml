@@ -34,6 +34,9 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ amd64 ]
     steps:
       - uses: actions/download-artifact@v3
         with:
@@ -50,6 +53,6 @@ jobs:
           ARCH: ${{ matrix.arch }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: dist/client-${{ runner.os }}-${{ env.ARCH }}
-          asset_name: client-${{ runner.os }}-${{ env.ARCH }}
+          asset_path: dist/client-${{ runner.os }}-${{ matrix.arch }}
+          asset_name: client-${{ runner.os }}-${{ matrix.arch }}
           asset_content_type: application/octet-stream
