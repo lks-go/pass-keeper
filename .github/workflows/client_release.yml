@@ -5,9 +5,15 @@ on:
 
 name: Latest Release
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
 
-  build:
+  release:
+    name: Create Release
+    runs-on: 'ubuntu-latest'
     strategy:
       matrix:
         include:
@@ -20,7 +26,6 @@ jobs:
           - os: macos-latest
             artifact_name: ${{ github.event.repository.name }}
             asset_name: ${{ github.event.repository.name }}-macos-amd64
-    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,14 +35,21 @@ jobs:
           go-version: 1.22.2
           cache: false
 
-      - name: Build release
+      - name: Get OS and arch info
         run: |
-          go build -o ${{ matrix.artifact_name }} -v
+          GOOS=${{matrix.os}}
+          BINARY_NAME=${{github.repository}}-$GOOS
+          echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
+          echo "GOOS=$GOOS" >> $GITHUB_ENV
+          
+      - name: Build
+        run: |
+          go build -o "$BINARY_NAME" -v
 
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/${{ matrix.artifact_name }}
-          asset_name: ${{ matrix.asset_name }}
-          tag: ${{ github.ref }}
+          body_path: ".github/RELEASE-TEMPLATE.md"
+          files: ${{env.BINARY_NAME}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
