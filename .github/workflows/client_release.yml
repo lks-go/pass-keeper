@@ -53,5 +53,5 @@ jobs:
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./app
-          asset_name: app
+          asset_name: app-${{ runner.os }}-${{ matrix.arch }}
           asset_content_type: application/octet-stream
