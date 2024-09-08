@@ -29,7 +29,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: app-${{ runner.os }}-${{ matrix.arch }}
-          path: dist
+          path: bin/app
   release:
     needs: build
     runs-on: ubuntu-latest
