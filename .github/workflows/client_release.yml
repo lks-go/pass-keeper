@@ -28,16 +28,14 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: app-${{ runner.os }}-${{ matrix.arch }}
+          name: pass-keeper-${{ runner.os }}-${{ matrix.arch }}
           path: bin/app
-          retention-days: 7
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: app-${{ runner.runner.os }}-${{ matrix.arch }}
           path: dist
       - name: Create Release
         id: create_release
@@ -52,9 +50,10 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
+          ARCH: ${{ matrix.arch }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/app-${{ runner.os }}-${{ matrix.arch }}
-          asset_name: app-${{ runner.os }}-${{ matrix.arch }}
+          asset_path: dist/pass-keeper-${{ runner.os }}-${{ env.ARCH }}
+          asset_name: pass-keeper-${{ runner.os }}-${{ env.ARCH }}
           asset_content_type: application/octet-stream
