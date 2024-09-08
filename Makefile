@@ -41,5 +41,8 @@ server_run:
 client_run:
 	go run cmd/client/main.go
 
+build_client:
+	go build -v -o ./bin/pass-keeper-client ./cmd/client
+
 new_migration:
 	$(GOPATH)/bin/migrate create -ext sql -dir ./migrations -seq $(filter-out $@, $(MAKECMDGOALS))
