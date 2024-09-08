@@ -1,0 +1,1 @@
+DROP TABLE binary_data_chunk;

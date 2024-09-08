@@ -1,4 +1,4 @@
-package setup
+package backend
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func DB(dsn string) (*sql.DB, error) {
+func setupDB(dsn string) (*sql.DB, error) {
 	pool, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)

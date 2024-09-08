@@ -12,6 +12,7 @@ tools: install_protoc
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 	go install github.com/vektra/mockery/v2@v2.43.2
+	go install -tags "postgres" github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.1
 
 
 install_protoc:
@@ -23,6 +24,9 @@ generate:
 	go generate ./...
 	go mod tidy
 
+cert_gen:
+	cd ./cert && sh gen.sh
+
 # alternative variant to generate grpc client/server
 generate_grpc:
 	mkdir -p ./pkg/grpc && \
@@ -31,6 +35,11 @@ generate_grpc:
 	--go_out=./pkg/grpc --go_opt=paths=source_relative \
 	--go-grpc_out=./pkg/grpc --go-grpc_opt=paths=source_relative pass-keeper.proto
 
-
-run_server:
+server_run:
 	go run cmd/server/main.go
+
+client_run:
+	go run cmd/client/main.go
+
+new_migration:
+	$(GOPATH)/bin/migrate create -ext sql -dir ./migrations -seq $(filter-out $@, $(MAKECMDGOALS))

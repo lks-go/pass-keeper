@@ -1,27 +1,28 @@
 package service
 
-import "context"
+import (
+	"github.com/lks-go/pass-keeper/internal/lib/token"
+	"github.com/lks-go/pass-keeper/internal/service/backend"
+)
 
-type Config struct {
-	UserPassSalt string
+type ServerConfig struct {
+	BinaryChunkSize int
 }
 
-func New(cfg *Config) *Service {
-	return &Service{cfg: cfg}
+type ServerDeps struct {
+	Storage      backend.Storage
+	PasswordHash backend.PasswordHash
+	Token        *token.Token
+	Crypt        backend.Crypt
 }
 
-type Service struct {
-	cfg *Config
-}
+func NewBackend(cfg ServerConfig, d ServerDeps) *backend.Service {
+	return &backend.Service{
+		BinaryChunkSize: cfg.BinaryChunkSize,
 
-type User struct {
-	Login    string
-	Password string
-}
-
-// Auth authenticates and authorizes the user by login and password
-// If auth succeed returns user's a new JWT
-func (s *Service) Auth(ctx context.Context, u User) (string, error) {
-	panic("implement me")
-	return "", nil
+		Storage:  d.Storage,
+		Password: d.PasswordHash,
+		Token:    d.Token,
+		Crypt:    d.Crypt,
+	}
 }
