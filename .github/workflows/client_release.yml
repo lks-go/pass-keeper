@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macOS-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
         arch: [amd64]
     steps:
       - uses: actions/checkout@v3
@@ -50,10 +50,9 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          ARCH: ${{ matrix.arch }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/pass-keeper-${{ runner.os }}-${{ env.ARCH }}
-          asset_name: pass-keeper-${{ runner.os }}-${{ env.ARCH }}
+          asset_path: dist/pass-keeper-${{ runner.os }}-${{ matrix.arch }}
+          asset_name: pass-keeper-${{ runner.os }}-${{ matrix.arch }}
           asset_content_type: application/octet-stream
