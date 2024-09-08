@@ -24,7 +24,6 @@ jobs:
         env:
           GOARCH: ${{ matrix.arch }}
         run: |
-          export CGO_ENABLED=0
           go build -o bin/app
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
