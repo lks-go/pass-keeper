@@ -24,12 +24,12 @@ jobs:
         env:
           GOARCH: ${{ matrix.arch }}
         run: |
-          go build -o bin/client ./cmd/client
+          go build -o bin/app ./cmd/client
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: client-${{ runner.os }}-${{ matrix.arch }}
-          path: bin/client
+          name: app-${{ runner.os }}-${{ matrix.arch }}
+          path: bin/app
           retention-days: 1
   release:
     needs: build
@@ -50,9 +50,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARCH: ${{ matrix.arch }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: dist/client-${{ runner.os }}-${{ matrix.arch }}
-          asset_name: client-${{ runner.os }}-${{ matrix.arch }}
+          asset_path: dist/app-${{ runner.os }}-${{ matrix.arch }}
+          asset_name: app-${{ runner.os }}-${{ matrix.arch }}
           asset_content_type: application/octet-stream
