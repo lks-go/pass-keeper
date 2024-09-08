@@ -30,28 +30,3 @@ jobs:
         with:
           name: app-${{ runner.os }}-${{ matrix.arch }}
           path: bin/app
-          retention-days: 1
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [ amd64 ]
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          path: dist
-      - name: Get Release
-        id: get_release
-        uses: bruceadams/get-release@v1.2.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: dist/app-${{ runner.os }}-${{ matrix.arch }}
-          asset_name: app-${{ runner.os }}-${{ matrix.arch }}
-          asset_content_type: application/octet-stream
