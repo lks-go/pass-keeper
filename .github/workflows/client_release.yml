@@ -32,9 +32,10 @@ jobs:
           path: bin/app
   release:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
         arch: [ amd64 ]
     steps:
       - uses: actions/download-artifact@v3
