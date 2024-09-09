@@ -10,49 +10,49 @@ on:
 #        arch: [amd64]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.22.2'
-      - name: Get dependencies
-        run: |
-          go get -v -t -d ./...
-      - name: Build
-        env:
-          GOARCH: amd64
-        run: |
-          go build -o bin/app ./cmd/client
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-${{ runner.os }}-amd64
-          path: bin/app
-  release-linux:
-    needs: build-linux
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: app-${{ runner.os }}-amd64
-          path: ./
-      - name: Get Release
-        id: get_release-linux
-        uses: bruceadams/get-release@v1.2.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release-linux.outputs.upload_url }}
-          asset_path: ./app
-          asset_name: app-${{ runner.os }}-amd64
-          asset_content_type: application/octet-stream
+#  build-linux:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Set up Go
+#        uses: actions/setup-go@v3
+#        with:
+#          go-version: '1.22.2'
+#      - name: Get dependencies
+#        run: |
+#          go get -v -t -d ./...
+#      - name: Build
+#        env:
+#          GOARCH: amd64
+#        run: |
+#          go build -o bin/app ./cmd/client
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: app-${{ runner.os }}-amd64
+#          path: bin/app
+#  release-linux:
+#    needs: build-linux
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/download-artifact@v3
+#        with:
+#          name: app-${{ runner.os }}-amd64
+#          path: ./
+#      - name: Get Linux Release
+#        id: get_release_linux
+#        uses: bruceadams/get-release@v1.2.2
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Upload Release Asset
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.get_release-linux.outputs.upload_url }}
+#          asset_path: ./app
+#          asset_name: app-${{ runner.os }}-amd64
+#          asset_content_type: application/octet-stream
 
   build-macos:
     runs-on: macOS-latest
@@ -83,8 +83,8 @@ jobs:
         with:
           name: app-${{ runner.os }}-amd64
           path: ./
-      - name: Get Release
-        id: get_release-mac
+      - name: Get Mac Release
+        id: get_release_mac
         uses: bruceadams/get-release@v1.2.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
