@@ -32,7 +32,7 @@ jobs:
           path: bin/app
   release:
     needs: build
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: app-${{ runner.os }}-${{ matrix.arch }}
+          name: app-${{ matrix.os }}-${{ matrix.arch }}
           path: ./
       - name: Get Release
         id: get_release
@@ -54,5 +54,5 @@ jobs:
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./app
-          asset_name: app-${{ runner.os }}-${{ matrix.arch }}
+          asset_name: app-${{ matrix.os }}-${{ matrix.arch }}
           asset_content_type: application/octet-stream
