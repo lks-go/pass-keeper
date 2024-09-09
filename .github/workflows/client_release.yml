@@ -6,7 +6,7 @@ on:
 
 #    strategy:
 #      matrix:
-#        os: [, macOS-latest, windows-latest]
+#        os: [windows-latest]
 #        arch: [amd64]
 
 jobs:
@@ -31,6 +31,29 @@ jobs:
         with:
           name: app-${{ runner.os }}-amd64
           path: bin/app
+  release-linux:
+    needs: build-linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: app-${{ runner.os }}-amd64
+          path: ./
+      - name: Get Release
+        id: get_release-linux
+        uses: bruceadams/get-release@v1.2.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release-linux.outputs.upload_url }}
+          asset_path: ./app
+          asset_name: app-${{ runner.os }}-amd64
+          asset_content_type: application/octet-stream
+
   build-macos:
     runs-on: macOS-latest
     steps:
@@ -61,7 +84,7 @@ jobs:
           name: app-${{ runner.os }}-amd64
           path: ./
       - name: Get Release
-        id: get_release
+        id: get_release-mac
         uses: bruceadams/get-release@v1.2.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,29 +93,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./app
-          asset_name: app-${{ runner.os }}-amd64
-          asset_content_type: application/octet-stream
-  release-linux:
-    needs: build-linux
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: app-${{ runner.os }}-amd64
-          path: ./
-      - name: Get Release
-        id: get_release
-        uses: bruceadams/get-release@v1.2.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release-mac.outputs.upload_url }}
           asset_path: ./app
           asset_name: app-${{ runner.os }}-amd64
           asset_content_type: application/octet-stream
