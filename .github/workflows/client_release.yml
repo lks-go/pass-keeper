@@ -4,6 +4,11 @@ on:
     tags:
       - 'v*'
 
+#    strategy:
+#      matrix:
+#        os: [, macOS-latest, windows-latest]
+#        arch: [amd64]
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
@@ -26,6 +31,49 @@ jobs:
         with:
           name: app-${{ runner.os }}-amd64
           path: bin/app
+  build-macos:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22.2'
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+      - name: Build
+        env:
+          GOARCH: amd64
+        run: |
+          go build -o bin/app ./cmd/client
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-${{ runner.os }}-amd64
+          path: bin/app
+  release-macos:
+    needs: build-macos
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: app-${{ runner.os }}-amd64
+          path: ./
+      - name: Get Release
+        id: get_release
+        uses: bruceadams/get-release@v1.2.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./app
+          asset_name: app-${{ runner.os }}-amd64
+          asset_content_type: application/octet-stream
   release-linux:
     needs: build-linux
     runs-on: ubuntu-latest
